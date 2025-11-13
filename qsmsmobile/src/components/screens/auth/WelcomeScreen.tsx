@@ -6,6 +6,7 @@ import React from 'react';
 import { View } from 'react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS, SIZES } from '../../../constants/theme';
 import Breaker from '../../Breaker';
 import Button from '../../Button';
 import ButtonOutline from '../../ButtonOutline';
@@ -19,72 +20,58 @@ const WelcomeScreen = () => {
   // const{ navigate: navigateTab}: NavigationProp<TabNavigationType> = useNavigation();
 
   return (
-    <SafeAreaView className="flex-1 justify-center items-center bg-white">
+    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }}>
       <StatusBar style="auto" />
 
-      <View className="w-full px-4 items-center space-y-8 justify-center h-full">
+      <View style={{ width: '100%', paddingHorizontal: SIZES.medium, alignItems: 'center', gap: SIZES.xxLarge, justifyContent: 'center', height: '100%' }}>
 
         {/* Logo */}
-        <View className="w-full px-4 items-center">
+        <View style={{ width: '100%', paddingHorizontal: SIZES.medium, alignItems: 'center' }}>
             <Animated.View
-              className="flex-row justify-center items-center"
+              style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
               entering={FadeInRight.duration(100).springify()}
             >
               <View>
-                <View className="w-20 h-20 overflow-hidden ">
+                <View style={{ width: 80, height: 80, overflow: 'hidden' }}>
                   <Image
                     source={require('../../../../assets/images/logo.png')}
-                    style={{ width: 96, height: 96 }}
                     contentFit="cover"
                     transition={1000}
                     placeholder={blurhash}
-                    className='w-full h-full flex-1'
+                    style={{ width: '100%', height: '100%', flex: 1 }}
                   />
                 </View>
               </View>
             </Animated.View>
         </View>
 
-
-        {/* <Animated.View
-          entering={FadeInRight.duration(500).springify()}
-          className="flex-row mb-4 justify-center items-center"
-        >
-          <View className="w-20 h-20 overflow-hidden rounded-full">
-            <Image
-              source={require('../../../../assets/images/logo.png')}
-              placeholder={blurhash}
-              contentFit="cover"
-              transition={1000}
-              className="w-full h-full"
-            />
-          </View>
-        </Animated.View> */}
-
         {/* Welcome Text */}
         <Animated.Text
           entering={FadeInDown.duration(500).delay(100).springify()}
-          className="text-3xl leading-[60px] text-black"
           style={{
+            fontSize: SIZES.xLarge,
+            lineHeight: 60,
+            color: COLORS.black,
             fontFamily: 'PlusJakartaSansBold',
+            textAlign: 'center',
           }}
         >
-          Welcome
+          Welcome back
         </Animated.Text>
 
         {/* Login and Sign Up */}
-        <View className="w-full">
+        <View style={{ width: '100%' }}>
           <Animated.View
             entering={FadeInDown.duration(500).delay(300).springify()}
-            className="pb-4"
+            style={{ paddingBottom: SIZES.medium }}
           >
-            <Button title="Login" />
+            <Button title="Login" action={()=> navigateAuth("Login")}/>
           </Animated.View>
 
           <Animated.View
             entering={FadeInDown.duration(500).delay(400).springify()}
           >
-            <ButtonOutline title="Sign Up" />
+            <ButtonOutline title="Sign Up" action={()=> navigateAuth("Register")}/>
           </Animated.View>
         </View>
 
@@ -92,17 +79,16 @@ const WelcomeScreen = () => {
         <Breaker />
 
         {/* Third Party Auth */}
-        <View className="w-full justify-normal">
+        <View style={{ width: '100%', justifyContent: 'flex-start' }}>
               <Animated.View
                 entering={FadeInDown.duration(100).delay(600).springify()}
-                className="border border-white pb-6"
+                style={{ borderColor: COLORS.white, paddingBottom: 24 }}
               >
                 <ButtonOutline title="Continue with Google">
                   <AntDesign
                     name="google"
-                    size={20}
-                    color="gray"
-                    
+                    size={SIZES.large}
+                    color={COLORS.gray}
                   />
                 </ButtonOutline>
               </Animated.View>
@@ -113,8 +99,8 @@ const WelcomeScreen = () => {
                 <ButtonOutline title="Continue with Apple">
                   <AntDesign
                     name="apple"
-                    size={20}
-                    color="gray"
+                    size={SIZES.large}
+                    color={COLORS.gray}
                     style={{ marginRight: 8 }}
                   />
                 </ButtonOutline>

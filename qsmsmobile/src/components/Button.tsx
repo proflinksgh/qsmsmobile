@@ -1,14 +1,96 @@
 import React from 'react';
-import { Pressable, Text } from 'react-native';
+import { ActivityIndicator, Pressable, Text } from 'react-native';
 
 interface ButtonProps {
-  title?: any;
+  title?: string;
   action?: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'small' | 'medium' | 'large';
+  fullWidth?: boolean;
+  className?: string;
+  textClassName?: string;
 }
-const Button: React.FC<ButtonProps> = ({ title, action }) => {
+
+const Button: React.FC<ButtonProps> = ({ 
+  title, 
+  action, 
+  disabled = false,
+  loading = false,
+  variant = 'primary',
+  size = 'medium',
+  fullWidth = true,
+  className = '',
+  textClassName = ''
+}) => {
+  
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'secondary':
+        return 'bg-gray-500';
+      case 'outline':
+        return 'bg-transparent border border-[#8f1ca6]';
+      default:
+        return 'bg-[#8f1ca6]';
+    }
+  };
+
+  const getSizeStyles = () => {
+    switch (size) {
+      case 'small':
+        return 'py-2 px-4';
+      case 'large':
+        return 'py-4 px-6';
+      default:
+        return 'py-3 px-5';
+    }
+  };
+
+  const getTextColor = () => {
+    return variant === 'outline' ? 'text-[#8f1ca6]' : 'text-white';
+  };
+
+  const getDisabledStyles = () => {
+    if (disabled) {
+      return variant === 'outline' 
+        ? 'border-gray-400 opacity-60' 
+        : 'bg-gray-400 opacity-60';
+    }
+    return '';
+  };
+
   return (
-    <Pressable className='bg-[#8f1ca6] rounded-lg justify-center  items-center py-3' onPress={action}>
-      <Text className='text-white font-bold text-lg text-center'>{title}</Text>
+    <Pressable 
+      className={`
+        rounded-lg justify-center items-center
+        ${getVariantStyles()}
+        ${getSizeStyles()}
+        ${getDisabledStyles()}
+        ${fullWidth ? 'w-full' : ''}
+        ${className}
+      `}
+      onPress={action}
+      disabled={disabled || loading}
+      style={({ pressed }) => ({
+        opacity: pressed ? 0.8 : 1,
+      })}
+    >
+      {loading ? (
+        <ActivityIndicator 
+          size="small" 
+          color={variant === 'outline' ? '#8f1ca6' : 'white'} 
+        />
+      ) : (
+        <Text className={`
+          font-bold text-center
+          ${getTextColor()}
+          ${size === 'small' ? 'text-sm' : size === 'large' ? 'text-xl' : 'text-lg'}
+          ${textClassName}
+        `}>
+          {title}
+        </Text>
+      )}
     </Pressable>
   );
 };
