@@ -56,7 +56,7 @@ const WelcomeScreen = () => {
             textAlign: 'center',
           }}
         >
-          Welcome back
+          Welcome back 
         </Animated.Text>
 
         {/* Login and Sign Up */}

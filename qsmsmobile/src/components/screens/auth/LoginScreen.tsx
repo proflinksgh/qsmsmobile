@@ -1,7 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useFocusEffect } from '@react-navigation/native';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from "axios";
-import { useRouter } from 'expo-router';
 import * as SecureStore from "expo-secure-store";
 import { Formik } from "formik";
 import LottieView from "lottie-react-native";
@@ -36,7 +35,9 @@ const validationSchema = Yup.object().shape({
 });
 
 const LoginScreen = () => {
-  const router = useRouter();
+  const { navigate: navigateAuth }: NavigationProp<any> = useNavigation();
+  const { navigate: navigateTab }: NavigationProp<any> = useNavigation();
+
   const animation = useRef(null);
   const [loader, setLoader] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -64,9 +65,6 @@ const LoginScreen = () => {
         await SecureStore.setItemAsync("id", user._id);
         await SecureStore.setItemAsync("token", token);
         setLogin(user);
-
-        
-  (router as any).replace("/");
       } else {
         throw new Error(data.message || "Unexpected response.");
       }
@@ -232,7 +230,7 @@ const LoginScreen = () => {
                     Don't have an account?{" "}
                     <Text
                       style={{ color: COLORS.secondary, fontWeight: 'bold' }}
-                      onPress={() => (router as any).push("/Register")}
+                      onPress={() => navigateAuth('Register')}
                     >
                       Sign Up
                     </Text>
@@ -246,7 +244,7 @@ const LoginScreen = () => {
                 >
                   <Text
                     style={[styles.registration, { color: COLORS.secondary }]}
-                    onPress={() => (router as any).push("/ForgotPassword")}
+                    onPress={() => navigateTab('Home')}
                   >
                     Forgot Password?
                   </Text>

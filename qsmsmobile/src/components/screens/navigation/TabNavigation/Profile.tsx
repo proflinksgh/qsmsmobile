@@ -3,9 +3,10 @@ import { Text, View } from 'react-native'
 
 const Profile = () => {
   return (
-    <View>
-      <Text>Profile</Text>
+   <View className="flex-1 items-center justify-center">
+        <Text className="text-lg font-bold">Profile</Text>
     </View>
+
   )
 }
 

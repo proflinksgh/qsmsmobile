@@ -3,9 +3,9 @@ import { Text, View } from 'react-native'
 
 const VoiceSms = () => {
   return (
-    <View>
-      <Text>VoiceSms</Text>
-    </View>
+      <View className="flex-1 items-center justify-center">
+            <Text className="text-lg font-bold">VoiceSms</Text>
+        </View>
   )
 }
 

@@ -1,20 +1,19 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useFocusEffect } from '@react-navigation/native';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from "axios";
-import { useRouter } from 'expo-router';
 import * as SecureStore from "expo-secure-store";
 import { Formik } from "formik";
 import LottieView from "lottie-react-native";
 import React, { useContext, useRef, useState } from "react";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Yup from "yup";
@@ -45,7 +44,7 @@ const validationSchema = Yup.object().shape({
 });
 
 const RegisterScreen = () => {
-  const router = useRouter();
+  const { navigate: navigateAuth }: NavigationProp<any> = useNavigation();
   const animation = useRef(null);
   const [loader, setLoader] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -78,7 +77,7 @@ const RegisterScreen = () => {
         Alert.alert(
           "Registration Successful",
           "Welcome to Errand! Your account has been created successfully.",
-          [{ text: "OK", onPress: () => (router as any).replace("/") }]
+          [{ text: "OK" }]
         );
       } else {
         throw new Error(data.message || "Unexpected response.");
@@ -357,7 +356,7 @@ const RegisterScreen = () => {
                         color: COLORS.secondary, 
                         fontFamily: 'PlusJakartaSansBold' 
                       }}
-                      onPress={() => (router as any).push("/Login")}
+                      onPress={() => navigateAuth('Login')}
                     >
                       Sign In
                     </Text>

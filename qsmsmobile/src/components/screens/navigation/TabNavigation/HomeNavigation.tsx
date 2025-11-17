@@ -3,9 +3,9 @@ import { Text, View } from 'react-native'
 
 const HomeNavigation = () => {
   return (
-    <View>
-      <Text>HomeNavigation</Text>
-    </View>
+      <View className="flex-1 items-center justify-center">
+            <Text className="text-lg font-bold">Home</Text>
+        </View>
   )
 }
 
