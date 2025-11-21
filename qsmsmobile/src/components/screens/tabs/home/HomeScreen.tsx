@@ -1,30 +1,46 @@
-import React from 'react'
-import { View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+// src/screens/HomeScreen.tsx
+import CreditsCard from "@/src/components/CreditsCard";
+import Header from "@/src/components/Header";
+import QuickActions from "@/src/components/QuickActions";
+import RecentActivity from "@/src/components/RecentActivity";
+import StatsCards from "@/src/components/StatCards";
+import React from "react";
+import { Platform, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const HomeScreen = () => {
+
+
+export const HomeScreen: React.FC = () => {
   return (
-    <SafeAreaView className='flex-1 bg-white'>
-      <View className="relative">
-            
-            {/* Header */}
+    <SafeAreaView className="flex-1 bg-[#FBFAF6]">
+      <View className="flex-1">
+        <Header />
 
-            <View className="w-full h-16 flex-row justify-between items-centerpx-4">
-                
-                <View className='w-3/4 flex-row space-x-2'>
-                  <View className='justify-center items-center'>
-                    <View className='h-12 w-12 rounded-2xl overflow-hidden'>
-                      {/* <Avatar size={48} /> */}
-
-                    </View>
-
-                  </View>
-
-                </View>
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: Platform.OS === "ios" ? 120 : 100 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="py-4 space-y-6">
+            <View>
+              <View>
+                {/* Title */}
+              </View>
             </View>
-        </View>
-    </SafeAreaView>
-  )
-}
 
-export default HomeScreen
+            <StatsCards />
+
+             <CreditsCard />
+
+            <QuickActions />
+
+            <RecentActivity /> 
+          </View>
+        </ScrollView>
+
+        {}
+      </View>
+    </SafeAreaView>
+  );
+};
+
+export default HomeScreen;

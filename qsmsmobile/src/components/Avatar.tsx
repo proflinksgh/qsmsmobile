@@ -141,3 +141,5 @@ export default Avatar;
       height: '100%',
     }
   });
+
+  

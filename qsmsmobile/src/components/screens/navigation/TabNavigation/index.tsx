@@ -4,7 +4,7 @@ import React from 'react';
 import { COLORS } from '../../../../constants/theme';
 import BulkSms from './BulkSms';
 import HomeNavigation from './HomeNavigation';
-import Profile from './Profile';
+import MoreScreen from './More';
 import VoiceSms from './VoiceSms';
 
 const Tab = createBottomTabNavigator();
@@ -25,6 +25,8 @@ const TabNavigation = () => {
             iconName = focused ? 'call' : 'call-outline';
           } else if (route.name === 'ProfileTab') {
             iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'MoreTab') {
+            iconName = focused ? 'grid' : 'grid-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -33,33 +35,43 @@ const TabNavigation = () => {
         tabBarInactiveTintColor: COLORS.gray,
         tabBarStyle: {
           backgroundColor: COLORS.white,
-          borderTopColor: COLORS.lightWhite,
+          borderTopColor: COLORS.offwhite,
           borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 5,
         },
       })}
     >
-      <Tab.Screen 
-        name="HomeTab" 
+      <Tab.Screen
+        name="HomeTab"
         component={HomeNavigation}
         options={{ title: 'Home' }}
       />
-      <Tab.Screen 
-        name="BulkSmsTab" 
+
+      <Tab.Screen
+        name="BulkSmsTab"
         component={BulkSms}
         options={{ title: 'Bulk SMS' }}
       />
-      <Tab.Screen 
-        name="VoiceSmsTab" 
+
+      <Tab.Screen
+        name="VoiceSmsTab"
         component={VoiceSms}
         options={{ title: 'Voice SMS' }}
       />
-      <Tab.Screen 
-        name="ProfileTab" 
+
+      {/* ✅ NEW BOTTOM TAB */}
+      <Tab.Screen
+        name="MoreTab"
+        component={MoreScreen}
+        options={{ title: 'More' }}
+      />
+
+      {/* <Tab.Screen
+        name="ProfileTab"
         component={Profile}
         options={{ title: 'Profile' }}
-      />
+      /> */}
     </Tab.Navigator>
   );
 };
