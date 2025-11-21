@@ -2,7 +2,7 @@
 import CreditsCard from "@/src/components/CreditsCard";
 import Header from "@/src/components/Header";
 import QuickActions from "@/src/components/QuickActions";
-import RecentActivity from "@/src/components/RecentActivity";
+import QuickOffers from "@/src/components/QuickOffers";
 import StatsCards from "@/src/components/StatCards";
 import React from "react";
 import { Platform, ScrollView, View } from "react-native";
@@ -33,7 +33,7 @@ export const HomeScreen: React.FC = () => {
 
             <QuickActions />
 
-            <RecentActivity /> 
+            <QuickOffers /> 
           </View>
         </ScrollView>
 
