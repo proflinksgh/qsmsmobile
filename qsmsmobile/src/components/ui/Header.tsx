@@ -1,11 +1,9 @@
-        // src/components/Header.tsx
-        import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
-        // const USER_AVATAR = "https://randomuser.me/api/portraits/men/32.jpg";
 
-        const Header: React.FC = () => {
+        const Header = () => {
         return (
             <View className="w-full bg-white border-b border-gray-200">
             <View className="flex-row items-center justify-between px-5 py-4">
@@ -13,7 +11,7 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 
                     {/* LOGO */}
                 <View className="w-12 h-12 bg-primary rounded-xl items-center justify-center shadow-sm">
-                    <Image source={require("../../assets/images/logo.png")} className="w-10 h-10" />
+                    <Image source={require("../../../assets/images/logo.png")} className="w-10 h-10" />
                 </View>
 
                 <View>
@@ -28,7 +26,7 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
                 </TouchableOpacity>
 
                 <View className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                    <Image source={require("../../assets/images/avatar.jpg")} className="w-full h-full" />
+                    <Image source={require("../../../assets/images/avatar.jpg")} className="w-full h-full" />
                 </View>
                 </View>
             </View>

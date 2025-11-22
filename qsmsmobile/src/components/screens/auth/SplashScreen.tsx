@@ -32,13 +32,13 @@ const SplashScreen = () => {
         
         <Animated.View className="flex-row mb-4 justify-center items-center"  entering={FadeInRight.duration(100).springify()}>
          <View className="w-20 h-20 overflow-hidden">
-          <Image 
-            source={require('../../../../assets/images/logo.png')} 
-            style={{ width: 96, height: 96 }} 
-            contentFit="cover"
-            transition={1000}
-            placeholder={blurhash}
-          />
+           <Image
+              source={require('../../../../assets/images/logo.png')}
+              contentFit="cover"
+              transition={1000}
+              placeholder={blurhash}
+              style={{ width: '100%', height: '100%', flex: 1 }}
+            />
          </View>
         </Animated.View>
 

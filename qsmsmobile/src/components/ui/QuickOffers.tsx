@@ -3,11 +3,12 @@ import React from "react";
 import { Text, View } from "react-native";
 
 const QuickOffer = () => {
+
   const offers = [
-    { title: "STARTER", price: "GH₵50", expiry: "No expiry", units: "1052 units", status: "Activate", badge: "starter" },
-    { title: "PREMIUM", price: "GH₵120", expiry: "No expiry", units: "3000 units", status: "Activate", badge: "premium" },
-    { title: "ADVANCE", price: "GH₵250", expiry: "No expiry", units: "12534 units", status: "Activate", badge: "advance" },
-    { title: "VIP", price: "GH₵500", expiry: "No expiry", units: "647283 units", status: "Activate", badge: "vip" },
+    { title: "STARTER", price: "GH₵50", expiry: "No expiry", units: "1,052 units", status: "Activate", badge: "starter" },
+    { title: "PREMIUM", price: "GH₵120", expiry: "No expiry", units: "30,00 units", status: "Activate", badge: "premium" },
+    { title: "ADVANCE", price: "GH₵250", expiry: "No expiry", units: "73,534 units", status: "Activate", badge: "advance" },
+    { title: "VIP", price: "GH₵500", expiry: "No expiry", units: "647,283 units", status: "Activate", badge: "vip" },
   ];
 
   const badgeStyles: any = {

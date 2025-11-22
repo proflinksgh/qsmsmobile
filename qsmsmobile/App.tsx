@@ -26,5 +26,5 @@ export default App;
 
 const Container = styled(View)`
   flex: 1;
-  background-color: #e07c1dff;
+  background-color: #1d4ae0ff;
 `;

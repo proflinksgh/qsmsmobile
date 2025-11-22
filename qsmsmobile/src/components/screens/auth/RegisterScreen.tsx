@@ -6,14 +6,14 @@ import { Formik } from "formik";
 import LottieView from "lottie-react-native";
 import React, { useContext, useRef, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Yup from "yup";
@@ -21,7 +21,7 @@ import * as Yup from "yup";
 import { LoginContext } from "../../../../context/LoginContext";
 import { COLORS, SIZES } from "../../../constants/theme";
 import styles from "../../../utils/login.style";
-import Button from "../../Button";
+import Button from "../../ui/Button";
 
 // ✅ Yup validation schema for registration
 const validationSchema = Yup.object().shape({
@@ -113,7 +113,7 @@ const RegisterScreen = () => {
               autoPlay
               loop
               source={require("../../../../assets/anime/Registration.json")}
-              style={{ width: "100%", height: SIZES.height / 3.2 }}
+              style={{ width: "100%", height: SIZES.height / 6 }}
             />
           </Animated.View>
 

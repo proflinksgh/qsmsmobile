@@ -7,7 +7,7 @@ interface LoginStyles {
   titleLogin: TextStyle;
   wrapper: ViewStyle;
   label: TextStyle;
-  inputWrapper: ViewStyle;      // static base input container style
+  inputWrapper: ViewStyle;    
   iconStyle: TextStyle;
   input: TextStyle;
   passwordContainer: ViewStyle;

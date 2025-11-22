@@ -1,22 +1,25 @@
-import ProfileHeader from "@/src/components/ProfileHeader";
-import Section from "@/src/components/Section";
+import ProfileHeader from "@/src/components/ui/ProfileHeader";
+import Section from "@/src/components/ui/Section";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { COLORS } from "../../../../constants/theme";
 
 const MoreScreen = () => {
+
+ 
+  
   return (
     <View style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 40 }}
-        stickyHeaderIndices={[0]} // makes the header sticky
+        stickyHeaderIndices={[0]} 
       >
         {/* Sticky Header */}
         <ProfileHeader
           name="Jhaygrand"
           referenceId="923842457438374"
-          avatar="https://randomuser.me/api/portraits/men/32.jpg"
+          // avatar={require("../../../../../assets/images/avatar.jpg")}
         />
 
         {/* Sections */}

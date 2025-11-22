@@ -7,9 +7,9 @@ import { View } from 'react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES } from '../../../constants/theme';
-import Breaker from '../../Breaker';
-import Button from '../../Button';
-import ButtonOutline from '../../ButtonOutline';
+import Breaker from '../../ui/Breaker';
+import Button from '../../ui/Button';
+import ButtonOutline from '../../ui/ButtonOutline';
 
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
@@ -20,10 +20,10 @@ const WelcomeScreen = () => {
   // const{ navigate: navigateTab}: NavigationProp<TabNavigationType> = useNavigation();
 
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white }}>
+    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.offwhite }}>
       <StatusBar style="auto" />
 
-      <View style={{ width: '100%', paddingHorizontal: SIZES.medium, alignItems: 'center', gap: SIZES.xxLarge, justifyContent: 'center', height: '100%' }}>
+      <View style={{ width: '100%', paddingHorizontal: SIZES.medium, alignItems: 'center', gap: SIZES.medium, justifyContent: 'center', height: '100%' }}>
 
         {/* Logo */}
         <View style={{ width: '100%', paddingHorizontal: SIZES.medium, alignItems: 'center' }}>

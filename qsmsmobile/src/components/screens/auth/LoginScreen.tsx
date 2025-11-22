@@ -21,10 +21,10 @@ import * as Yup from "yup";
 import { LoginContext } from "../../../../context/LoginContext";
 import { COLORS, SIZES } from "../../../constants/theme";
 import styles from "../../../utils/login.style";
-import Button from "../../Button";
+import Button from "../../ui/Button";
 
 
-// ✅ Yup validation schema
+
 const validationSchema = Yup.object().shape({
   email: Yup.string()
     .email("Provide a valid email address")
@@ -44,7 +44,6 @@ const LoginScreen = () => {
   const { setLogin } = useContext(LoginContext);
 
 
-  // Reset loader and visibility when screen refocuses
   useFocusEffect(
     React.useCallback(() => {
       setLoader(false);
@@ -101,7 +100,7 @@ const LoginScreen = () => {
               autoPlay
               loop
               source={require("../../../../assets/anime/Login.json")}
-              style={{ width: "100%", height: SIZES.height / 3.2 }}
+              style={{ width: "100%", height: SIZES.height / 4.2 }}
             />
           </Animated.View>
 

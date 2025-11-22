@@ -30,9 +30,9 @@ const Button: React.FC<ButtonProps> = ({
       case 'secondary':
         return 'bg-gray-500';
       case 'outline':
-        return 'bg-transparent border border-[#8f1ca6]';
+        return 'bg-transparent border border-[#1c3fa6]';
       default:
-        return 'bg-[#8f1ca6]';
+        return 'bg-[#1c3fa6]';
     }
   };
 
@@ -48,7 +48,7 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   const getTextColor = () => {
-    return variant === 'outline' ? 'text-[#8f1ca6]' : 'text-white';
+    return variant === 'outline' ? 'text-[#1c3fa6]' : 'text-white';
   };
 
   const getDisabledStyles = () => {
@@ -79,7 +79,7 @@ const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator 
           size="small" 
-          color={variant === 'outline' ? '#8f1ca6' : 'white'} 
+          color={variant === 'outline' ? '#1c3fa6' : '#1c3fa6'} 
         />
       ) : (
         <Text className={`

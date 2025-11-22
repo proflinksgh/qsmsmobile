@@ -9,10 +9,11 @@ interface Props {
   avatar?: string;
 }
 
+
 const ProfileHeader = ({ name, referenceId, avatar }: Props) => {
   return (
     <LinearGradient
-      colors={["#005CFF", "#003BB6"]} // gradient colors
+      colors={["#005CFF", "#003BB6"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{
@@ -24,7 +25,7 @@ const ProfileHeader = ({ name, referenceId, avatar }: Props) => {
         overflow: "hidden",
       }}
     >
-      {/* Decorative Shapes (optional) */}
+      {/* Decorative Shapes */}
       <View
         style={{
           position: "absolute",
@@ -63,7 +64,8 @@ const ProfileHeader = ({ name, referenceId, avatar }: Props) => {
       >
         {avatar ? (
           <Image
-            source={require("../../assets/images/avatar.jpg")}            style={{ width: "100%", height: "100%" }}
+            // source={require("../../../assets/images/avatar.png")}          
+            style={{ width: "100%", height: "100%" }}
             resizeMode="cover"
           />
         ) : (
@@ -74,7 +76,7 @@ const ProfileHeader = ({ name, referenceId, avatar }: Props) => {
       {/* User Info */}
       <Text style={{ fontSize: 18, fontWeight: "600", color: "#FFFFFF" }}>{name}</Text>
       <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginTop: 2 }}>
-        Ref ID: {referenceId}
+         ID: {referenceId}
       </Text>
     </LinearGradient>
   );
