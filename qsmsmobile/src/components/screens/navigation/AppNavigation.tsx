@@ -1,6 +1,7 @@
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import React from 'react';
 
+import MoreStackNavigator from './MoreNavigation/MoreNavigator';
 import QuickActionsNavigator from './QuickActionsNavigation/QuickActionNavigator';
 import TabNavigation from './TabNavigation';
 
@@ -22,6 +23,8 @@ const AppNavigation = () => {
         component={QuickActionsNavigator}
         options={{ headerShown: false }}
       />
+
+      <Stack.Screen name="MoreTab" component={MoreStackNavigator} />
     </Stack.Navigator>
   )
 }

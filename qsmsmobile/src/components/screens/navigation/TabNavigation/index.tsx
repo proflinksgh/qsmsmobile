@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { COLORS } from '../../../../constants/theme';
+import MoreStackNavigator from '../MoreNavigation/MoreNavigator';
 import BulkSms from './BulkSms';
 import HomeNavigation from './HomeNavigation';
-import MoreScreen from './More';
 import VoiceSms from './VoiceSms';
 
 const Tab = createBottomTabNavigator();
@@ -60,18 +60,13 @@ const TabNavigation = () => {
         options={{ title: 'Voice SMS' }}
       />
 
-      {/* ✅ NEW BOTTOM TAB */}
-      <Tab.Screen
-        name="MoreTab"
-        component={MoreScreen}
-        options={{ title: 'More' }}
-      />
 
-      {/* <Tab.Screen
-        name="ProfileTab"
-        component={Profile}
-        options={{ title: 'Profile' }}
-      /> */}
+      <Tab.Screen
+          name="MoreTab"
+          component={MoreStackNavigator} 
+          options={{ title: 'More' }}
+        />
+
     </Tab.Navigator>
   );
 };

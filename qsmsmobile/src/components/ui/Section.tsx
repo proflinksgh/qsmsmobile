@@ -3,7 +3,7 @@ import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { COLORS } from "../../constants/theme";
 
-interface SectionItem {
+export interface SectionItem {
   label: string;
   icon: string;
   onPress?: () => void;
@@ -22,7 +22,7 @@ const Section = ({ title, items }: SectionProps) => {
           fontSize: 16,
           fontWeight: "600",
           marginBottom: 10,
-          color: "#111827", // slightly darker than before for readability
+          color: "#111827",
         }}
       >
         {title}
@@ -41,7 +41,7 @@ const Section = ({ title, items }: SectionProps) => {
             key={index}
             onPress={item.onPress}
             style={{
-              width: "22%", 
+              width: "22%",
               aspectRatio: 1,
               backgroundColor: COLORS.lightWhite,
               borderRadius: 16,
@@ -50,19 +50,20 @@ const Section = ({ title, items }: SectionProps) => {
               padding: 10,
               borderWidth: 1,
               borderColor: COLORS.gray2,
-              marginBottom: 12, 
+              marginBottom: 12,
             }}
           >
             <Ionicons name={item.icon as any} size={26} color={COLORS.primary1} />
             <Text
               style={{
                 marginTop: 6,
+                fontFamily: "JakartaSans-Regular",
                 fontSize: 10,
                 textAlign: "center",
                 fontWeight: "500",
                 color: "#111827",
               }}
-              numberOfLines={2} // prevent overflow for long labels
+              numberOfLines={2}
             >
               {item.label}
             </Text>
