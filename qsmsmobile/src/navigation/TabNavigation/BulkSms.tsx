@@ -1,11 +1,24 @@
-import React from 'react'
-import { Text, View } from 'react-native'
+import { BulkSmsScreen } from '@/src/screens/app/bulksms';
+import { TransitionPresets, createStackNavigator } from '@react-navigation/stack';
+import React from 'react';
+
+const Stack = createStackNavigator();
+
 
 const BulkSms = () => {
   return (
-      <View className="flex-1 items-center justify-center">
-            <Text className="text-lg font-bold">BulkSms</Text>
-      </View>
+       <Stack.Navigator
+      screenOptions={{ 
+        headerShown: false,
+        ...TransitionPresets.SlideFromRightIOS,
+        gestureEnabled: true,
+        gestureDirection: 'horizontal',
+        
+      }}
+    >
+      <Stack.Screen name="BulkSmsScreen" component={BulkSmsScreen} />
+      
+    </Stack.Navigator>
   )
 }
 
