@@ -4,7 +4,8 @@ import { View } from 'react-native';
 import styled from 'styled-components/native';
 import './global.css';
 import useCachedResources from './hooks/useCachedResources';
-import RootNavigation from './src/components/screens/navigation/RootNavigation';
+import { LoginProvider } from './src/context/LoginContext';
+import RootNavigation from './src/navigation/RootNavigation';
 
 const App = () => {
 
@@ -15,10 +16,12 @@ const App = () => {
   }
 
   return (
-    <Container>
-      <StatusBar style="auto" />
-      <RootNavigation />
-    </Container>
+    <LoginProvider>
+      <Container>
+        <StatusBar style="auto" />
+        <RootNavigation />
+      </Container>
+    </LoginProvider>
   );
 };
 
