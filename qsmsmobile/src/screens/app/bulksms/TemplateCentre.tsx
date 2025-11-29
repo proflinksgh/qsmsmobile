@@ -1,4 +1,3 @@
-// src/screens/BulkSms/tabs/TemplateCentre.tsx
 import FloatingTopTabs from "@/src/components/FloatingTopTabs";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import React from "react";

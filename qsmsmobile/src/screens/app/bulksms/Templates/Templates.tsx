@@ -1,4 +1,3 @@
-// src/screens/BulkSms/tabs/templates/TemplateList.tsx
 import React from "react";
 import { Text, View } from "react-native";
 
