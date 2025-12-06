@@ -1,22 +1,21 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import axios from "axios";
-import * as SecureStore from "expo-secure-store";
 import { Formik } from "formik";
 import LottieView from "lottie-react-native";
 import React, { useContext, useRef, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Yup from "yup";
+import { signIn } from "../../firebase/auth";
 
 import Button from "../../components/Button";
 import { COLORS, SIZES } from "../../constants/theme";
@@ -36,7 +35,6 @@ const validationSchema = Yup.object().shape({
 
 const LoginScreen = () => {
   const { navigate: navigateAuth }: NavigationProp<any> = useNavigation();
-  const { navigate: navigateTab }: NavigationProp<any> = useNavigation();
 
   const animation = useRef(null);
   const [loader, setLoader] = useState(false);
@@ -54,24 +52,10 @@ const LoginScreen = () => {
   const loginFunc = async (values: { email: string; password: string }) => {
     setLoader(true);
     try {
-      const endpoint = "http://172.20.10.11:3001/api/users/login";
-      const { data, status } = await axios.post(endpoint, values);
-
-      if (status === 200 && data.status) {
-        const { user, token } = data;
-        if (!user || !token) throw new Error("Missing user or token.");
-
-        await SecureStore.setItemAsync("id", user._id);
-        await SecureStore.setItemAsync("token", token);
-        setLogin(user);
-      } else {
-        throw new Error(data.message || "Unexpected response.");
-      }
+      const user = await signIn(values.email, values.password);
+      setLogin(!!user);
     } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Invalid credentials, please check and try again.";
+      const message = error?.message || "Invalid credentials, please check and try again.";
       Alert.alert("Login Failed", message);
     } finally {
       setLoader(false);
@@ -243,7 +227,7 @@ const LoginScreen = () => {
                 >
                   <Text
                     style={[styles.registration, { color: COLORS.secondary }]}
-                    onPress={() => navigateTab('Home')}
+                    onPress={() => navigateAuth('ForgotPassword')}
                   >
                     Forgot Password?
                   </Text>

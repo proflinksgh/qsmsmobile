@@ -1,7 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import axios from "axios";
-import * as SecureStore from "expo-secure-store";
 import { Formik } from "formik";
 import LottieView from "lottie-react-native";
 import React, { useContext, useRef, useState } from "react";
@@ -17,6 +15,7 @@ import {
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Yup from "yup";
+import { register } from "../../firebase/auth";
 
 import Button from "../../components/Button";
 import { COLORS, SIZES } from "../../constants/theme";
@@ -63,30 +62,16 @@ const RegisterScreen = () => {
   const registerFunc = async (values: { name: string; email: string; password: string }) => {
     setLoader(true);
     try {
-      const endpoint = "http://172.20.10.11:3001/api/users/register";
-      const { data, status } = await axios.post(endpoint, values);
-
-      if (status === 201 && data.status) {
-        const { user, token } = data;
-        if (!user || !token) throw new Error("Missing user or token.");
-
-        await SecureStore.setItemAsync("id", user._id);
-        await SecureStore.setItemAsync("token", token);
-        setLogin(user);
-
-        Alert.alert(
-          "Registration Successful",
-          "Welcome to Errand! Your account has been created successfully.",
-          [{ text: "OK" }]
-        );
-      } else {
-        throw new Error(data.message || "Unexpected response.");
-      }
+      // Firebase creates the user and signs them in by default
+      const user = await register(values.email, values.password);
+      setLogin(!!user);
+      Alert.alert(
+        "Registration Successful",
+        "Your account has been created successfully.",
+        [{ text: "OK" }]
+      );
     } catch (error: any) {
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Registration failed, please try again.";
+      const message = error?.message || "Registration failed, please try again.";
       Alert.alert("Registration Failed", message);
     } finally {
       setLoader(false);

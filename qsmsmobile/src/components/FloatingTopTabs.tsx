@@ -1,72 +1,90 @@
-import { BlurView } from "expo-blur";
-import React from "react";
-import { Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+// FloatingTopTabsBulk.tsx
+import { MaterialIcons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import {
+  Modal,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-interface RouteType {
-  key: string;
-  name: string;
-}
+const FloatingTopTabsBulk = ({ activeTab, setActiveTab, onOpenTemplate }: any) => {
+  const [open, setOpen] = useState(false);
 
-interface StateType {
-  routes: RouteType[];
-  index: number;
-}
+  const visibleTabs = [
+    { key: "normal", label: "Normal SMS" },
+    { key: "personalised", label: "Personalised" },
+    { key: "contactless", label: "Contactless" },
+  ];
 
-interface Props {
-  state: StateType;
-  descriptors: { [key: string]: any };
-  navigation: { navigate: (name: string) => void };
-}
-
-const FloatingTopTabs = ({ state, descriptors, navigation }: Props) => {
-  const Container = Platform.OS === "ios" ? BlurView : View;
+  const hiddenTabs = [
+    { key: "data", label: "Data SMS" },
+    { key: "template", label: "Template Centre" },
+  ];
 
   return (
-    <View className="px-4 pt-8 items-center z-10">
-      <Container
-        intensity={25}
-        tint="light"
-        style={{ flexDirection: "row", borderRadius: 30, padding: 6, backgroundColor: Platform.OS === "android" ? "white" : "rgba(255,255,255,0.85)", shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }}
-      >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+    <View className="bg-white rounded-2xl shadow-md mx-3 mt-3 p-2 flex-row items-center">
+      
+      {visibleTabs.map((tab) => (
+        <TouchableOpacity
+          key={tab.key}
+          onPress={() => setActiveTab(tab.key)}
+          className={`px-3 py-2 mx-1 rounded-xl ${
+            activeTab === tab.key ? "bg-violet-200" : "bg-gray-100"
+          }`}
         >
-          {state.routes.map((route, index) => {
-            const label =
-              descriptors[route.key].options.tabBarLabel ??
-              descriptors[route.key].options.title ??
-              route.name;
+          <Text
+            className={
+              activeTab === tab.key
+                ? "text-violet-700 font-semibold"
+                : "text-gray-600"
+            }
+          >
+            {tab.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
 
-            const focused = state.index === index;
+      {/* Hamburger */}
+      <TouchableOpacity
+        onPress={() => setOpen(true)}
+        className="ml-auto bg-gray-100 px-3 py-2 rounded-xl"
+      >
+        <MaterialIcons name="menu" size={22} color="gray" />
+      </TouchableOpacity>
 
-            return (
-              <TouchableOpacity
-                key={route.key}
-                onPress={() => navigation.navigate(route.name)}
-                activeOpacity={0.7}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 20,
-                  backgroundColor: focused ? "white" : "transparent",
-                  shadowColor: focused ? "#000" : undefined,
-                  shadowOpacity: focused ? 0.08 : 0,
-                  shadowRadius: focused ? 4 : 0,
-                  elevation: focused ? 2 : 0,
-                }}
-              >
-                <Text style={{ fontSize: 14, fontWeight: "600", color: focused ? "#0066FF" : "#444" }}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </Container>
+      {/* Dropdown */}
+      <Modal visible={open} transparent animationType="fade">
+        <Pressable className="flex-1 bg-black/40" onPress={() => setOpen(false)}>
+          <View className="absolute right-5 top-20 bg-white p-4 rounded-2xl w-[60%] shadow-lg">
+
+            {/* Data SMS */}
+            <TouchableOpacity
+              className="py-3"
+              onPress={() => {
+                setOpen(false);
+                setActiveTab("data");
+              }}
+            >
+              <Text className="text-gray-700">Data SMS</Text>
+            </TouchableOpacity>
+
+            {/* Template Centre (Expands) */}
+            <TouchableOpacity
+              className="py-3"
+              onPress={() => {
+                setOpen(false);
+                onOpenTemplate(); // opens template dropdown
+              }}
+            >
+              <Text className="text-gray-700">Template Centre ▼</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
 
-export default FloatingTopTabs;
+export default FloatingTopTabsBulk;
