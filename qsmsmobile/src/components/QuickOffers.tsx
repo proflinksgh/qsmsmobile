@@ -1,112 +1,218 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const QuickOffer = () => {
-
   const offers = [
-    { title: "STARTER", price: "GH₵50", expiry: "No expiry", units: "1,052 units", status: "Activate", badge: "starter" },
-    { title: "PREMIUM", price: "GH₵120", expiry: "No expiry", units: "30,00 units", status: "Activate", badge: "premium" },
-    { title: "ADVANCE", price: "GH₵250", expiry: "No expiry", units: "73,534 units", status: "Activate", badge: "advance" },
-    { title: "VIP", price: "GH₵500", expiry: "No expiry", units: "647,283 units", status: "Activate", badge: "vip" },
+    { 
+      title: "STARTER", 
+      price: "GH₵50", 
+      units: "1,052 units", 
+      badge: "starter",
+      popular: false
+    },
+    { 
+      title: "PREMIUM", 
+      price: "GH₵120", 
+      units: "3,000 units", 
+      badge: "premium",
+      popular: true
+    },
+    { 
+      title: "ADVANCE", 
+      price: "GH₵250", 
+      units: "7,500 units", 
+      badge: "advance",
+      popular: false
+    },
   ];
 
-  const badgeStyles: any = {
+  const badgeStyles: Record<string, {
+    iconBg: string;
+    iconColor: string;
+    gradientStart: string;
+    gradientEnd: string;
+    icon: string;
+  }> = {
     starter: {
       iconBg: "#ECFDF5",
       iconColor: "#16A34A",
-      statusBg: "#DCFCE7",
-      statusColor: "#16A34A",
-      icon: "checkmark-circle",
+      gradientStart: "#16A34A",
+      gradientEnd: "#059669",
+      icon: "leaf",
     },
     premium: {
-      iconBg: "#FFFBEB",
+      iconBg: "#FEF3C7",
       iconColor: "#D97706",
-      statusBg: "#FFEDD5",
-      statusColor: "#D97706",
-      icon: "pricetag",
+      gradientStart: "#F59E0B",
+      gradientEnd: "#D97706",
+      icon: "star",
     },
     advance: {
-      iconBg: "#FEE2E2",
-      iconColor: "#DC2626",
-      statusBg: "#FECACA",
-      statusColor: "#DC2626",
-      icon: "bookmark",
+      iconBg: "#F0EEFF",
+      iconColor: "#667eea",
+      gradientStart: "#667eea",
+      gradientEnd: "#764ba2",
+      icon: "diamond",
     },
-    vip: {
-        iconBg: "#E0F2FF",       
-        iconColor: "#0066CC",   
-        statusBg: "#CCE5FF",     
-        statusColor: "#0066CC", 
-        icon: "gift",            
-},
-
   };
 
   return (
-    <View className="mt-6">
-
+    <View style={styles.container}>
       {/* Header Row */}
-      <View className="flex-row items-center justify-between px-1 mb-3">
-        <Text className="text-lg font-semibold">Quick Offers</Text>
-        <Text className="text-[#005CFF] text-sm font-medium">View all</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Credit Packages</Text>
+        <TouchableOpacity>
+          <Text style={styles.viewAllText}>View all</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Offers List */}
-      <View>
+      <View style={styles.offersList}>
         {offers.map((offer, index) => {
           const s = badgeStyles[offer.badge];
 
           return (
-            <View
+            <TouchableOpacity
               key={index}
-              className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex-row items-center justify-between mb-3"
+              style={[
+                styles.offerCard,
+                offer.popular && styles.offerCardPopular
+              ]}
+              activeOpacity={0.7}
             >
-              {/* Left Section */}
-              <View className="flex-row items-center">
-                <View
-                  style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 21,
-                    backgroundColor: s.iconBg,
-                  }}
-                  className="items-center justify-center mr-3"
-                >
-                  <Ionicons name={s.icon as any} size={20} color={s.iconColor} />
+              {offer.popular && (
+                <View style={styles.popularBadge}>
+                  <Text style={styles.popularText}>Popular</Text>
                 </View>
+              )}
+              
+              {/* Icon */}
+              <View style={[styles.iconContainer, { backgroundColor: s.iconBg }]}>
+                <Ionicons name={s.icon as any} size={20} color={s.iconColor} />
+              </View>
 
-                <View>
-                  <Text className="font-semibold text-sm">{offer.title}</Text>
-                  <Text className="text-xs text-gray-500">
-                    {offer.price} / {offer.expiry}
+              {/* Content */}
+              <View style={styles.offerContent}>
+                <Text style={styles.offerTitle}>{offer.title}</Text>
+                <Text style={styles.offerUnits}>{offer.units}</Text>
+              </View>
+
+              {/* Price & Action */}
+              <View style={styles.priceContainer}>
+                <Text style={styles.priceText}>{offer.price}</Text>
+                <View style={[
+                  styles.activateButton,
+                  { backgroundColor: s.iconBg }
+                ]}>
+                  <Text style={[styles.activateText, { color: s.iconColor }]}>
+                    Buy
                   </Text>
                 </View>
               </View>
-
-              {/* Right Section */}
-              <View className="items-end">
-                <View
-                  style={{
-                    backgroundColor: s.statusBg,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 999,
-                  }}
-                >
-                  <Text style={{ color: s.statusColor }} className="text-xs font-medium">
-                    {offer.status}
-                  </Text>
-                </View>
-
-                <Text className="text-[10px] text-gray-500 mt-1">{offer.units}</Text>
-              </View>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 0,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSansBold',
+    color: '#1F2937',
+  },
+  viewAllText: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSansSemiBold',
+    color: '#667eea',
+  },
+  offersList: {
+    gap: 12,
+  },
+  offerCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  offerCardPopular: {
+    borderWidth: 2,
+    borderColor: '#667eea',
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#667eea',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 10,
+  },
+  popularText: {
+    fontSize: 10,
+    fontFamily: 'PlusJakartaSansBold',
+    color: 'white',
+  },
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  offerContent: {
+    flex: 1,
+  },
+  offerTitle: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSansBold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  offerUnits: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans',
+    color: '#6B7280',
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  priceText: {
+    fontSize: 16,
+    fontFamily: 'PlusJakartaSansBold',
+    color: '#1F2937',
+  },
+  activateButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  activateText: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSansBold',
+  },
+});
 
 export default QuickOffer;

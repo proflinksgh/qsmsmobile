@@ -954,10 +954,10 @@ const NormalSms = () => {
                       )}
                     </Animated.View>
                   )}
-
+ 
                   {/* SENDER ID */}
                   <Animated.View entering={FadeInDown.delay(250)}>
-                    <View className="flex-row justify-between items-center mb-3">
+                    <View className="flex-row justify-between items-center mt-8 mb-1">
                       <Text className="text-gray-800 font-semibold text-base">
                         Sender ID *
                       </Text>
@@ -975,7 +975,7 @@ const NormalSms = () => {
                         color="#6b7280"
                       />
                       <TextInput
-                        placeholder="e.g., CompanyName"
+                        placeholder="Enter Sender ID"
                         maxLength={11}
                         value={values.senderId}
                         onChangeText={handleChange("senderId")}
@@ -994,7 +994,7 @@ const NormalSms = () => {
 
                   {/* MESSAGE BOX */}
                   <Animated.View entering={FadeInDown.delay(300)}>
-                    <View className="flex-row justify-between items-center mb-3">
+                    <View className="flex-row justify-between items-center mt-8 mb-1">
                       <Text className="text-gray-800 font-semibold text-base">
                         Message *
                       </Text>
@@ -1020,15 +1020,6 @@ const NormalSms = () => {
                         placeholderTextColor="#9ca3af"
                       />
                       
-                      {/* Message Info */}
-                      <View className="mt-3 pt-3 border-t border-gray-100 flex-row justify-between">
-                        <Text className="text-gray-500 text-xs">
-                          SMS Length: {Math.ceil(values.message.length / 160)} message(s)
-                        </Text>
-                        <Text className="text-blue-500 text-xs">
-                          Unicode: {/[^\x00-\x7F]/.test(values.message) ? "Yes" : "No"}
-                        </Text>
-                      </View>
                     </View>
 
                     {errors.message && touched.message && (
@@ -1040,7 +1031,7 @@ const NormalSms = () => {
 
                   {/* CONTACT INPUT */}
                   <Animated.View entering={FadeInDown.delay(350)}>
-                    <View className="flex-row justify-between items-center mb-3">
+                    <View className="flex-row justify-between items-center mt-8 mb-2">
                       <Text className="text-gray-800 font-semibold text-base">
                         Recipients *
                       </Text>
@@ -1100,7 +1091,7 @@ const NormalSms = () => {
                     )}
 
                     {/* Contact Input */}
-                    <View className={`bg-white border rounded-xl px-4 py-3 ${
+                    <View className={`bg-white border rounded-xl px-4 py-3 mb-8 ${
                       errors.contact && touched.contact ? 'border-red-300' : 'border-gray-300'
                     }`}>
                       <TextInput
@@ -1113,11 +1104,6 @@ const NormalSms = () => {
                         placeholderTextColor="#9ca3af"
                       />
                     </View>
-
-                    {/* Contact Info */}
-                    <Text className="text-gray-500 text-xs mt-2 ml-1">
-                      Format: 2348012345678, 2348098765432, ...
-                    </Text>
 
                     {errors.contact && touched.contact && (
                       <Text className="text-red-500 text-sm mt-2 ml-1">
