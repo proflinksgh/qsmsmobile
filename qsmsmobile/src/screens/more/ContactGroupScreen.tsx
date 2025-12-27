@@ -58,6 +58,7 @@ const GroupItem: React.FC<{ item: ContactGroup; index: number }> = ({ item, inde
 };
 
 const ContactGroupScreen = () => {
+  const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredGroups = mockGroups.filter(
@@ -71,6 +72,7 @@ const ContactGroupScreen = () => {
       <ScreenHeader
         title="Contact Groups"
         subtitle="Manage your groups"
+        onBackPress={() => navigation.goBack()}
         rightAction={
           <TouchableOpacity style={styles.addButton}>
             <Ionicons name="add" size={24} color="white" />

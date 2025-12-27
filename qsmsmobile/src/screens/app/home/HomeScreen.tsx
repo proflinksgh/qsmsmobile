@@ -3,6 +3,8 @@ import CreditsCard from "@/src/components/CreditsCard";
 import Header from "@/src/components/Header";
 import QuickActions from "@/src/components/QuickActions";
 import QuickOffers from "@/src/components/QuickOffers";
+import { SmsStats } from "@/src/components/SmsStats";
+import { COLORS } from "@/src/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
@@ -29,7 +31,7 @@ const HomeScreen = () => {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
       {/* Header with gradient */}
-      <Header />
+      <Header onProfilePress={() => navigation.navigate("UserProfile")} />
 
       {/* Main Content */}
       <ScrollView
@@ -37,16 +39,27 @@ const HomeScreen = () => {
         contentContainerStyle={styles.scrollContent}
         style={styles.scrollView}
       >
-        {/* Credits Card Section */}
+        {/* SMS Overview Stats */}
+        <SmsStats
+          credits={24500}
+          consumed={18750}
+          remaining={5750}
+          sent={12450}
+          delivered={12180}
+          failed={270}
+          scheduled={128}
+        />
+
+        {/* Balance Card Section */}
         <Animated.View 
-          entering={FadeInDown.duration(600).delay(100)}
+          entering={FadeInDown.duration(600).delay(250)}
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Balance</Text>
             <TouchableOpacity style={styles.seeAllButton}>
-              <Text style={styles.seeAllText}>History</Text>
-              <Ionicons name="chevron-forward" size={14} color="#667eea" />
+              <Text style={styles.seeAllText}>Top Up</Text>
+              <Ionicons name="add-circle" size={14} color={COLORS.gradientPurple1} />
             </TouchableOpacity>
           </View>
           <CreditsCard />
@@ -72,7 +85,7 @@ const HomeScreen = () => {
             <Text style={styles.sectionTitle}>Services</Text>
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>View All</Text>
-              <Ionicons name="chevron-forward" size={14} color="#667eea" />
+              <Ionicons name="chevron-forward" size={14} color={COLORS.gradientPurple1} />
             </TouchableOpacity>
           </View>
           <View style={styles.servicesGrid}>
@@ -80,32 +93,32 @@ const HomeScreen = () => {
               icon="chatbubbles-outline" 
               title="Bulk SMS" 
               subtitle="Send messages"
-              color="#667eea"
-              bgColor="#F0EEFF"
+              color={COLORS.gradientPurple1}
+              bgColor={COLORS.violetLight}
               onPress={() => handleActionPress("BulkSms")}
             />
             <ServiceCard 
               icon="volume-high-outline" 
               title="Voice SMS" 
               subtitle="Audio messages"
-              color="#f5576c"
-              bgColor="#FFF0F2"
+              color={COLORS.gradientPurple2}
+              bgColor={COLORS.violetLight}
               onPress={() => handleActionPress("VoiceSms")}
             />
             <ServiceCard 
               icon="mail-outline" 
               title="Email" 
               subtitle="Bulk email"
-              color="#059669"
-              bgColor="#ECFDF5"
+              color={COLORS.success}
+              bgColor={COLORS.successLight}
               onPress={() => handleActionPress("EmailMarketingScreen")}
             />
             <ServiceCard 
               icon="code-slash-outline" 
               title="API" 
               subtitle="Integration"
-              color="#D97706"
-              bgColor="#FFFBEB"
+              color={COLORS.warning}
+              bgColor={COLORS.warningLight}
               onPress={() => handleActionPress("ApiScreen")}
             />
           </View>
@@ -128,14 +141,14 @@ const HomeScreen = () => {
             <Text style={styles.sectionTitle}>Recent Activity</Text>
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>View All</Text>
-              <Ionicons name="chevron-forward" size={14} color="#667eea" />
+              <Ionicons name="chevron-forward" size={14} color={COLORS.gradientPurple1} />
             </TouchableOpacity>
           </View>
           <View style={styles.activityCard}>
             <ActivityItem 
               icon="checkmark-circle"
-              iconColor="#16A34A"
-              iconBg="#DCFCE7"
+              iconColor={COLORS.success}
+              iconBg={COLORS.successLight}
               title="SMS Delivered"
               subtitle="500 messages sent successfully"
               time="2 min ago"
@@ -143,8 +156,8 @@ const HomeScreen = () => {
             <View style={styles.activityDivider} />
             <ActivityItem 
               icon="wallet"
-              iconColor="#667eea"
-              iconBg="#F0EEFF"
+              iconColor={COLORS.gradientPurple1}
+              iconBg={COLORS.violetLight}
               title="Credits Added"
               subtitle="₵100.00 top-up completed"
               time="1 hour ago"
@@ -152,8 +165,8 @@ const HomeScreen = () => {
             <View style={styles.activityDivider} />
             <ActivityItem 
               icon="people"
-              iconColor="#D97706"
-              iconBg="#FFFBEB"
+              iconColor={COLORS.warning}
+              iconBg={COLORS.warningLight}
               title="New Contacts"
               subtitle="25 contacts imported"
               time="3 hours ago"
@@ -211,11 +224,11 @@ const ActivityItem = ({ icon, iconColor, iconBg, title, subtitle, time }: Activi
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: COLORS.background,
   },
   scrollView: {
     flex: 1,
-    marginTop: -10,
+    marginTop: -15,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -237,7 +250,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontFamily: 'PlusJakartaSansBold',
-    color: '#1F2937',
+    color: COLORS.textPrimary,
   },
   seeAllButton: {
     flexDirection: 'row',
@@ -247,7 +260,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSansSemiBold',
-    color: '#667eea',
+    color: COLORS.textMuted,
   },
   servicesGrid: {
     flexDirection: 'row',
@@ -256,10 +269,10 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     width: '48%',
-    backgroundColor: 'white',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -276,19 +289,19 @@ const styles = StyleSheet.create({
   serviceTitle: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSansBold',
-    color: '#1F2937',
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   serviceSubtitle: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
-    color: '#6B7280',
+    color: COLORS.textMuted,
   },
   activityCard: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -313,22 +326,22 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSansSemiBold',
-    color: '#1F2937',
+    color: COLORS.textPrimary,
     marginBottom: 2,
   },
   activitySubtitle: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
-    color: '#6B7280',
+    color: COLORS.textMuted,
   },
   activityTime: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans',
-    color: '#9CA3AF',
+    color: COLORS.textLight,
   },
   activityDivider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.border,
     marginLeft: 52,
   },
 });

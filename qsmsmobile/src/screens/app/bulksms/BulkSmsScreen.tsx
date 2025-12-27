@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import {
   Platform,
   StatusBar,
@@ -12,12 +11,13 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 
-import ContactlessSms from "./ContactlessSms";
-import DataSms from "./DataSms";
-import NormalSms from "./NormalSms";
-import PersonalisedSms from "./PersonalisedSms";
-import TemplateCategoryDropdown from "./Templates/TemplateCategoryDropdown";
-import TemplateFormScreen from "./Templates/TemplateFormScreens";
+// Lazy load the SMS components to avoid navigation context issues during module initialization
+const NormalSms = React.lazy(() => import("./NormalSms"));
+const PersonalisedSms = React.lazy(() => import("./PersonalisedSms"));
+const ContactlessSms = React.lazy(() => import("./ContactlessSms"));
+const DataSms = React.lazy(() => import("./DataSms"));
+const TemplateCategoryDropdown = React.lazy(() => import("./Templates/TemplateCategoryDropdown"));
+const TemplateFormScreen = React.lazy(() => import("./Templates/TemplateFormScreens"));
 
 const tabs = [
   { key: "normal", label: "Normal", icon: "chatbubble-outline" },
@@ -27,7 +27,6 @@ const tabs = [
 ];
 
 const BulkSmsScreen = () => {
-  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("normal");
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -48,12 +47,9 @@ const BulkSmsScreen = () => {
           entering={FadeIn.duration(600)}
           style={styles.headerTop}
         >
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={22} color="white" />
-          </TouchableOpacity>
+          <View style={styles.headerIconContainer}>
+            <Ionicons name="chatbubbles" size={22} color="white" />
+          </View>
           
           <View style={styles.headerTitleContainer}>
             <Text style={styles.headerTitle}>Bulk SMS</Text>
@@ -100,24 +96,28 @@ const BulkSmsScreen = () => {
       </LinearGradient>
 
       {/* Template Categories Dropdown */}
-      <TemplateCategoryDropdown
-        visible={showTemplateDropdown}
-        onClose={() => setShowTemplateDropdown(false)}
-        onSelect={(cat: string) => {
-          setSelectedTemplate(cat);
-          setActiveTab("template");
-        }}
-      />
+      <Suspense fallback={<View />}>
+        <TemplateCategoryDropdown
+          visible={showTemplateDropdown}
+          onClose={() => setShowTemplateDropdown(false)}
+          onSelect={(cat: string) => {
+            setSelectedTemplate(cat);
+            setActiveTab("template");
+          }}
+        />
+      </Suspense>
 
       {/* Main Content */}
       <View style={styles.content}>
-        {activeTab === "normal" && <NormalSms />}
-        {activeTab === "personalised" && <PersonalisedSms />}
-        {activeTab === "contactless" && <ContactlessSms />}
-        {activeTab === "data" && <DataSms />}
-        {activeTab === "template" && selectedTemplate && (
-          <TemplateFormScreen title={selectedTemplate} />
-        )}
+        <Suspense fallback={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><Text>Loading...</Text></View>}>
+          {activeTab === "normal" && <NormalSms />}
+          {activeTab === "personalised" && <PersonalisedSms />}
+          {activeTab === "contactless" && <ContactlessSms />}
+          {activeTab === "data" && <DataSms />}
+          {activeTab === "template" && selectedTemplate && (
+            <TemplateFormScreen title={selectedTemplate} />
+          )}
+        </Suspense>
       </View>
     </View>
   );
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 20,
   },
-  backButton: {
+  headerIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 12,

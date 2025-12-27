@@ -79,6 +79,7 @@ const TransactionItem: React.FC<{ item: Transaction; index: number }> = ({ item,
 };
 
 const PaymentsScreen = () => {
+  const navigation = useNavigation();
   const [filter, setFilter] = useState<"all" | "credit" | "debit">("all");
 
   const filteredTransactions = mockTransactions.filter(
@@ -90,6 +91,7 @@ const PaymentsScreen = () => {
       <ScreenHeader
         title="Payments"
         subtitle="Transaction history"
+        onBackPress={() => navigation.goBack()}
         rightAction={
           <TouchableOpacity style={styles.addButton}>
             <Ionicons name="add" size={24} color="white" />

@@ -1,15 +1,21 @@
 import Button from "@/src/components/Button";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  calculateSmsCost,
+  calculateSmsUnits,
+  getSmsBalance,
+  parsePhoneNumbers,
+  scheduleSms,
+  sendInstantSms,
+} from "@/src/service/smsService";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import { NavigationProp, useNavigation } from "@react-navigation/native";
-import axios from "axios";
+import DateTimePicker from "@react-native-community/datetimepicker";
+
 import * as Contacts from "expo-contacts";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
-import * as SecureStore from "expo-secure-store";
 import { Formik } from "formik";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -29,14 +35,22 @@ const validationSchema = Yup.object().shape({
   task: Yup.string().required(),
   senderId: Yup.string()
     .max(11, "Sender ID must be 11 characters or less")
+    .min(3, "Sender ID must be at least 3 characters")
+    .matches(/^[a-zA-Z0-9]+$/, "Sender ID can only contain letters and numbers")
     .required("Sender ID is required"),
   message: Yup.string()
     .required("Message is required")
-    .max(160, "Message cannot exceed 160 characters"),
-  contact: Yup.string().required("At least one contact is required"),
+    .min(1, "Message cannot be empty"),
+  contact: Yup.string()
+    .required("At least one contact is required")
+    .test('valid-phones', 'Invalid phone number format detected', (value) => {
+      if (!value) return false;
+      const { valid } = parsePhoneNumbers(value);
+      return valid.length > 0;
+    }),
   repeat: Yup.string().required(),
-  scheduleDate: Yup.date().nullable(),
-  scheduleTime: Yup.string().nullable(),
+  scheduleDate: Yup.date().required(),
+  scheduleTime: Yup.date().required(),
 });
 
 // Contact Group Interface
@@ -75,18 +89,36 @@ interface FormValues {
   message: string;
   contact: string;
   repeat: string;
-  scheduleDate: Date | null;
-  scheduleTime: string;
+  scheduleDate: Date;
+  scheduleTime: Date;
 }
 
-// Contact Selection Modal Component
-const ContactSelectionModal: React.FC<{
+// Contact Selection Modal Component - Add Contacts Only
+const ContactsModal: React.FC<{
   visible: boolean;
   onClose: () => void;
   onSelectAllContacts: () => Promise<void>;
-  onSelectIndividualContacts: () => Promise<void>;
+  onBrowseContacts: () => Promise<void>;
   onImportFromFile: () => Promise<void>;
-}> = ({ visible, onClose, onSelectAllContacts, onSelectIndividualContacts, onImportFromFile }) => {
+  onContactsAdded: (numbers: string) => void;
+}> = ({ 
+  visible, 
+  onClose, 
+  onSelectAllContacts, 
+  onBrowseContacts, 
+  onImportFromFile, 
+  onContactsAdded,
+}) => {
+  const [manualNumbers, setManualNumbers] = useState('');
+
+  const handleManualAdd = () => {
+    if (manualNumbers.trim()) {
+      onContactsAdded(manualNumbers.trim());
+      setManualNumbers('');
+      onClose();
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -99,73 +131,79 @@ const ContactSelectionModal: React.FC<{
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={80}
         >
-          <View className="bg-white rounded-t-3xl p-6 max-h-[85%]">
+          <View className="bg-white rounded-t-3xl max-h-[90%]">
             {/* HEADER */}
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-xl font-bold text-gray-900">Add Contacts</Text>
-              <TouchableOpacity onPress={onClose}>
+            <View className="flex-row justify-between items-center p-5 border-b border-gray-100">
+              <Text className="text-xl font-bold text-gray-900">Add Recipients</Text>
+              <TouchableOpacity onPress={onClose} className="p-1">
                 <MaterialCommunityIcons name="close" size={24} color="#6b7280" />
               </TouchableOpacity>
             </View>
 
-            {/* OPTION 1 — SELECT ALL CONTACTS */}
-            <TouchableOpacity
-              className="flex-row items-center p-4 bg-blue-50 rounded-xl mb-3"
-              onPress={onSelectAllContacts}
-            >
-              <View className="w-12 h-12 bg-blue-100 rounded-lg items-center justify-center">
-                <MaterialCommunityIcons name="account-multiple" size={28} color="#3b82f6" />
-              </View>
-              <View className="ml-4 flex-1">
-                <Text className="font-semibold text-gray-900">Select All Contacts</Text>
-                <Text className="text-gray-600 text-sm mt-1">
-                  Add every contact from your phone
-                </Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={24} color="#9ca3af" />
-            </TouchableOpacity>
+            <ScrollView className="p-5" keyboardShouldPersistTaps="handled">
+                  {/* MANUAL INPUT */}
+                  <View className="mb-5">
+                    <Text className="text-gray-700 font-medium mb-2">Enter phone numbers</Text>
+                    <TextInput
+                      placeholder="e.g., 23346387436, 233243987654"
+                      value={manualNumbers}
+                      onChangeText={setManualNumbers}
+                      multiline
+                      className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 min-h-[80px]"
+                      placeholderTextColor="#9ca3af"
+                      textAlignVertical="top"
+                    />
+                    {manualNumbers.trim() && (
+                      <TouchableOpacity
+                        onPress={handleManualAdd}
+                        className="mt-3 bg-blue-500 py-3 rounded-xl"
+                      >
+                        <Text className="text-center text-white font-semibold">Add Numbers</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
 
-            {/* OPTION 2 — SELECT INDIVIDUAL CONTACTS */}
-            <TouchableOpacity
-              className="flex-row items-center p-4 bg-green-50 rounded-xl mb-4"
-              onPress={onSelectIndividualContacts}
-            >
-              <View className="w-12 h-12 bg-green-100 rounded-lg items-center justify-center">
-                <MaterialCommunityIcons name="account-box" size={28} color="#10b981" />
-              </View>
-              <View className="ml-4 flex-1">
-                <Text className="font-semibold text-gray-900">Browse & Select Contacts</Text>
-                <Text className="text-gray-600 text-sm mt-1">
-                  Browse and pick specific contacts
-                </Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={24} color="#9ca3af" />
-            </TouchableOpacity>
+                  <View className="h-px bg-gray-200 mb-5" />
 
-            {/* OPTION 3 — IMPORT FILE */}
-            <TouchableOpacity
-              className="flex-row items-center p-4 bg-purple-50 rounded-xl mb-4"
-              onPress={onImportFromFile}
-            >
-              <View className="w-12 h-12 bg-purple-100 rounded-lg items-center justify-center">
-                <MaterialCommunityIcons name="file-upload" size={28} color="#8b5cf6" />
-              </View>
-              <View className="ml-4 flex-1">
-                <Text className="font-semibold text-gray-900">Import from File</Text>
-                <Text className="text-gray-600 text-sm mt-1">
-                  CSV, Excel, or Text files
-                </Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={24} color="#9ca3af" />
-            </TouchableOpacity>
+                  {/* QUICK OPTIONS */}
+                  <Text className="text-gray-700 font-medium mb-3">Or choose from</Text>
+                  
+                  <View className="flex-row flex-wrap">
+                    <TouchableOpacity
+                      className="w-[48%] mr-[4%] mb-3 bg-blue-50 p-4 rounded-xl items-center"
+                      onPress={onBrowseContacts}
+                    >
+                      <MaterialCommunityIcons name="account-search" size={32} color="#3b82f6" />
+                      <Text className="text-gray-800 font-medium mt-2 text-center">Browse Contacts</Text>
+                    </TouchableOpacity>
 
-            {/* CANCEL BUTTON */}
-            <TouchableOpacity
-              onPress={onClose}
-              className="mt-4 p-4 bg-gray-100 rounded-xl"
-            >
-              <Text className="text-center text-gray-700 font-medium">Cancel</Text>
-            </TouchableOpacity>
+                    <TouchableOpacity
+                      className="w-[48%] mb-3 bg-green-50 p-4 rounded-xl items-center"
+                      onPress={onSelectAllContacts}
+                    >
+                      <MaterialCommunityIcons name="account-multiple-check" size={32} color="#10b981" />
+                      <Text className="text-gray-800 font-medium mt-2 text-center">All Contacts</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      className="w-[48%] mr-[4%] bg-purple-50 p-4 rounded-xl items-center"
+                      onPress={onImportFromFile}
+                    >
+                      <MaterialCommunityIcons name="file-document-outline" size={32} color="#8b5cf6" />
+                      <Text className="text-gray-800 font-medium mt-2 text-center">Import File</Text>
+                    </TouchableOpacity>
+                  </View>
+            </ScrollView>
+
+            {/* CLOSE BUTTON */}
+            <View className="p-5 border-t border-gray-100">
+              <TouchableOpacity
+                onPress={onClose}
+                className="py-4 bg-gray-100 rounded-xl"
+              >
+                <Text className="text-center text-gray-700 font-medium">Close</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -377,123 +415,348 @@ const ContactBrowserModal: React.FC<{
   );
 };
 
-// Contact Groups Modal Component
-const ContactGroupsModal: React.FC<{
+// Groups Management Modal - Independent contact group creation
+const GroupsModal: React.FC<{
   visible: boolean;
   onClose: () => void;
   contactGroups: ContactGroup[];
-  selectedGroup: ContactGroup | null;
   onSelectGroup: (group: ContactGroup) => void;
-  onCreateGroup: () => void;
-  onDeleteGroup: (groupId: string) => void;
-}> = ({ visible, onClose, contactGroups, selectedGroup, onSelectGroup, onCreateGroup, onDeleteGroup }) => (
-  <Modal
-    visible={visible}
-    transparent
-    animationType="slide"
-    onRequestClose={onClose}
-  >
-    <View className="flex-1 bg-black/50 justify-end">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={80}
-      >
-        <View className="bg-white rounded-t-3xl p-6 max-h-[80%]">
-          <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-xl font-bold text-gray-900">Contact Groups</Text>
-            <TouchableOpacity onPress={onClose}>
-              <MaterialCommunityIcons name="close" size={24} color="#6b7280" />
-            </TouchableOpacity>
-          </View>
+  onCreateGroup: (name: string, contacts: string[]) => void;
+  onDeleteGroup: (id: string) => void;
+}> = ({ visible, onClose, contactGroups, onSelectGroup, onCreateGroup, onDeleteGroup }) => {
+  const [mode, setMode] = useState<'list' | 'create'>('list');
+  const [groupName, setGroupName] = useState('');
+  const [contacts, setContacts] = useState<ContactItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-          {/* Create New Group */}
-          <TouchableOpacity
-            className="flex-row items-center p-4 bg-blue-500 rounded-xl mb-4"
-            onPress={onCreateGroup}
-          >
-            <MaterialCommunityIcons name="plus-circle" size={24} color="white" />
-            <Text className="ml-3 text-white font-medium">Create New Group</Text>
-          </TouchableOpacity>
+  // Load contacts when entering create mode
+  const loadContacts = async () => {
+    setLoading(true);
+    try {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant access to contacts to create a group.');
+        setMode('list');
+        return;
+      }
 
-          {/* Existing Groups */}
-          <ScrollView className="max-h-60" keyboardShouldPersistTaps="handled">
-            {contactGroups.length === 0 ? (
-              <View className="p-8 items-center">
-                <MaterialCommunityIcons name="account-group" size={48} color="#d1d5db" />
-                <Text className="text-gray-500 mt-4">No groups created yet</Text>
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Name],
+      });
+
+      const contactsWithPhones = data
+        .filter((c: Contact) => c.phoneNumbers && c.phoneNumbers.length > 0)
+        .map((c: Contact) => ({
+          id: c.id,
+          name: c.name || 'Unknown',
+          phoneNumbers: c.phoneNumbers?.map((p: PhoneNumber) => p.number || '').filter(Boolean) || [],
+          selected: false,
+        }));
+
+      setContacts(contactsWithPhones);
+    } catch (error) {
+      console.error('Error loading contacts:', error);
+      Alert.alert('Error', 'Failed to load contacts');
+      setMode('list');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleContact = (id: string) => {
+    setContacts(prev =>
+      prev.map(c => (c.id === id ? { ...c, selected: !c.selected } : c))
+    );
+  };
+
+  const selectAll = () => {
+    const filteredContacts = contacts.filter(c =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const allSelected = filteredContacts.every(c => c.selected);
+    setContacts(prev =>
+      prev.map(c => {
+        if (c.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+          return { ...c, selected: !allSelected };
+        }
+        return c;
+      })
+    );
+  };
+
+  const handleSaveGroup = () => {
+    if (!groupName.trim()) {
+      Alert.alert('Error', 'Please enter a group name');
+      return;
+    }
+
+    const selectedContacts = contacts.filter(c => c.selected);
+    if (selectedContacts.length === 0) {
+      Alert.alert('Error', 'Please select at least one contact');
+      return;
+    }
+
+    const allNumbers = selectedContacts.flatMap(c => c.phoneNumbers);
+    onCreateGroup(groupName.trim(), allNumbers);
+    
+    // Reset state
+    setGroupName('');
+    setContacts([]);
+    setSearchQuery('');
+    setMode('list');
+  };
+
+  const handleStartCreate = () => {
+    setMode('create');
+    loadContacts();
+  };
+
+  const handleCancelCreate = () => {
+    setGroupName('');
+    setContacts([]);
+    setSearchQuery('');
+    setMode('list');
+  };
+
+  const selectedCount = contacts.filter(c => c.selected).length;
+  const filteredContacts = contacts.filter(c =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 bg-black/50 justify-end">
+        <View className="bg-white rounded-t-3xl h-[90%]">
+          {mode === 'list' ? (
+            <>
+              {/* List Mode Header */}
+              <View className="flex-row justify-between items-center p-5 border-b border-gray-100">
+                <Text className="text-xl font-bold text-gray-900">My Groups</Text>
+                <TouchableOpacity onPress={onClose} className="p-1">
+                  <MaterialCommunityIcons name="close" size={24} color="#6b7280" />
+                </TouchableOpacity>
               </View>
-            ) : (
-              contactGroups.map((group) => (
-                <View
-                  key={group.id}
-                  className={`flex-row items-center p-4 rounded-xl mb-2 ${
-                    selectedGroup?.id === group.id ? 'bg-blue-50' : 'bg-gray-50'
+
+              <ScrollView className="flex-1 p-5">
+                {/* Create New Group Button */}
+                <TouchableOpacity
+                  onPress={handleStartCreate}
+                  className="flex-row items-center bg-blue-50 border-2 border-dashed border-blue-300 p-4 rounded-xl mb-5"
+                >
+                  <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center">
+                    <MaterialCommunityIcons name="plus" size={28} color="#3b82f6" />
+                  </View>
+                  <View className="ml-4 flex-1">
+                    <Text className="text-blue-700 font-semibold text-base">Create New Group</Text>
+                    <Text className="text-blue-500 text-sm">Select contacts from your phone</Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={24} color="#3b82f6" />
+                </TouchableOpacity>
+
+                {/* Saved Groups List */}
+                {contactGroups.length === 0 ? (
+                  <View className="items-center py-10">
+                    <MaterialCommunityIcons name="folder-account-outline" size={64} color="#d1d5db" />
+                    <Text className="text-gray-500 font-medium mt-4">No saved groups</Text>
+                    <Text className="text-gray-400 text-sm mt-1 text-center px-8">
+                      Create a group to quickly send messages to multiple contacts
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text className="text-gray-600 font-medium mb-3">Saved Groups ({contactGroups.length})</Text>
+                    {contactGroups.map((group) => (
+                      <View
+                        key={group.id}
+                        className="flex-row items-center bg-gray-50 p-4 rounded-xl mb-3"
+                      >
+                        <TouchableOpacity
+                          onPress={() => {
+                            onSelectGroup(group);
+                            onClose();
+                          }}
+                          className="flex-row items-center flex-1"
+                        >
+                          <View className="w-12 h-12 bg-purple-100 rounded-full items-center justify-center">
+                            <MaterialCommunityIcons name="account-group" size={26} color="#8b5cf6" />
+                          </View>
+                          <View className="ml-3 flex-1">
+                            <Text className="text-gray-900 font-semibold">{group.name}</Text>
+                            <Text className="text-gray-500 text-sm">{group.contacts.length} contacts</Text>
+                          </View>
+                          <MaterialCommunityIcons name="chevron-right" size={24} color="#9ca3af" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => onDeleteGroup(group.id)}
+                          className="p-2 ml-2"
+                        >
+                          <MaterialCommunityIcons name="trash-can-outline" size={22} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </>
+                )}
+              </ScrollView>
+
+              {/* Close Button */}
+              <View className="p-5 border-t border-gray-100">
+                <TouchableOpacity
+                  onPress={onClose}
+                  className="py-4 bg-gray-100 rounded-xl"
+                >
+                  <Text className="text-center text-gray-700 font-medium">Close</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              {/* Create Mode Header */}
+              <View className="flex-row justify-between items-center p-5 border-b border-gray-100">
+                <TouchableOpacity onPress={handleCancelCreate} className="flex-row items-center">
+                  <MaterialCommunityIcons name="arrow-left" size={24} color="#6b7280" />
+                  <Text className="text-gray-600 ml-2">Back</Text>
+                </TouchableOpacity>
+                <Text className="text-lg font-bold text-gray-900">Create Group</Text>
+                <View style={{ width: 70 }} />
+              </View>
+
+              {/* Group Name Input */}
+              <View className="px-5 py-4 border-b border-gray-100">
+                <Text className="text-gray-700 font-medium mb-2">Group Name</Text>
+                <TextInput
+                  placeholder="Enter group name..."
+                  value={groupName}
+                  onChangeText={setGroupName}
+                  className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800"
+                  placeholderTextColor="#9ca3af"
+                />
+              </View>
+
+              {/* Search & Select All */}
+              <View className="px-5 py-3 border-b border-gray-100">
+                <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-2 mb-3">
+                  <MaterialCommunityIcons name="magnify" size={20} color="#9ca3af" />
+                  <TextInput
+                    placeholder="Search contacts..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    className="flex-1 ml-2 text-gray-800"
+                    placeholderTextColor="#9ca3af"
+                  />
+                </View>
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-gray-600">
+                    {selectedCount} selected
+                  </Text>
+                  <TouchableOpacity onPress={selectAll}>
+                    <Text className="text-blue-600 font-medium">
+                      {filteredContacts.length > 0 && filteredContacts.every(c => c.selected) ? 'Deselect All' : 'Select All'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Contacts List */}
+              {loading ? (
+                <View className="flex-1 justify-center items-center">
+                  <MaterialCommunityIcons name="account-search" size={48} color="#d1d5db" />
+                  <Text className="text-gray-500 mt-4">Loading contacts...</Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={filteredContacts}
+                  keyExtractor={(item) => item.id}
+                  className="flex-1"
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => toggleContact(item.id)}
+                      className={`flex-row items-center px-5 py-3 border-b border-gray-100 ${
+                        item.selected ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <View className={`w-10 h-10 rounded-full items-center justify-center ${
+                        item.selected ? 'bg-blue-500' : 'bg-gray-200'
+                      }`}>
+                        {item.selected ? (
+                          <MaterialCommunityIcons name="check" size={20} color="white" />
+                        ) : (
+                          <Text className="text-gray-600 font-medium">
+                            {item.name.charAt(0).toUpperCase()}
+                          </Text>
+                        )}
+                      </View>
+                      <View className="ml-3 flex-1">
+                        <Text className={`font-medium ${item.selected ? 'text-blue-700' : 'text-gray-900'}`}>
+                          {item.name}
+                        </Text>
+                        <Text className="text-gray-500 text-sm">
+                          {item.phoneNumbers[0]}{item.phoneNumbers.length > 1 ? ` +${item.phoneNumbers.length - 1} more` : ''}
+                        </Text>
+                      </View>
+                      <MaterialCommunityIcons
+                        name={item.selected ? "checkbox-marked-circle" : "checkbox-blank-circle-outline"}
+                        size={24}
+                        color={item.selected ? "#3b82f6" : "#d1d5db"}
+                      />
+                    </TouchableOpacity>
+                  )}
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                />
+              )}
+
+              {/* Save Button */}
+              <View className="p-5 border-t border-gray-100">
+                <TouchableOpacity
+                  onPress={handleSaveGroup}
+                  disabled={selectedCount === 0 || !groupName.trim()}
+                  className={`py-4 rounded-xl ${
+                    selectedCount > 0 && groupName.trim() ? 'bg-blue-500' : 'bg-gray-300'
                   }`}
                 >
-                  <TouchableOpacity
-                    className="flex-row flex-1 items-center"
-                    onPress={() => {
-                      onSelectGroup(group);
-                      onClose();
-                    }}
-                  >
-                    <View className={`w-10 h-10 rounded-lg items-center justify-center ${
-                      selectedGroup?.id === group.id ? 'bg-blue-100' : 'bg-gray-200'
-                    }`}>
-                      <MaterialCommunityIcons 
-                        name="account-group" 
-                        size={20} 
-                        color={selectedGroup?.id === group.id ? "#3b82f6" : "#6b7280"} 
-                      />
-                    </View>
-                    <View className="ml-4 flex-1">
-                      <Text className="font-medium text-gray-900">{group.name}</Text>
-                      <Text className="text-gray-600 text-sm">{group.contacts.length} contacts</Text>
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* Delete button */}
-                  <TouchableOpacity
-                    onPress={() => onDeleteGroup(group.id)}
-                    className="ml-2 p-2"
-                  >
-                    <MaterialCommunityIcons name="trash-can-outline" size={20} color="#ef4444" />
-                  </TouchableOpacity>
-                  {selectedGroup?.id === group.id && (
-                    <MaterialCommunityIcons name="check-circle" size={24} color="#3b82f6" />
-                  )}
-                </View>
-              ))
-            )}
-          </ScrollView>
-
-          <TouchableOpacity
-            onPress={onClose}
-            className="mt-6 p-4 bg-gray-100 rounded-xl"
-          >
-            <Text className="text-center text-gray-700 font-medium">Close</Text>
-          </TouchableOpacity>
+                  <Text className={`text-center font-semibold ${
+                    selectedCount > 0 && groupName.trim() ? 'text-white' : 'text-gray-500'
+                  }`}>
+                    Save Group ({selectedCount} contacts)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
-      </KeyboardAvoidingView>
-    </View>
-  </Modal>
-);
+      </View>
+    </Modal>
+  );
+};
 
 const NormalSms = () => {
-  const navigation: NavigationProp<any> = useNavigation();
   const [loader, setLoader] = useState(false);
   const [contactModal, setContactModal] = useState(false);
-  const [groupModal, setGroupModal] = useState(false);
   const [browserModal, setBrowserModal] = useState(false);
+  const [groupsModal, setGroupsModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [contactGroups, setContactGroups] = useState<ContactGroup[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<ContactGroup | null>(null);
+  const [sendSuccess, setSendSuccess] = useState(false);
 
   // Load saved contact groups
   useEffect(() => {
     loadContactGroups();
   }, []);
+
+  const loadSmsBalance = async () => {
+    try {
+      await getSmsBalance();
+    } catch (error) {
+      console.error('Error loading SMS balance:', error);
+    }
+  };
 
   const loadContactGroups = async () => {
     try {
@@ -669,73 +932,95 @@ const NormalSms = () => {
   const handleSend = async (values: FormValues) => {
     try {
       setLoader(true);
-      const token = await SecureStore.getItemAsync("token");
+      setSendSuccess(false);
 
-      if (!token) {
-        Alert.alert("Error", "Authentication required. Please login again.");
-        navigation.navigate("Login");
-        return;
-      }
+      // Parse and validate phone numbers
+      const { valid: validContacts, invalid: invalidContacts } = parsePhoneNumbers(values.contact);
 
-      // Validate contacts
-      const contacts = values.contact
-        .split(',')
-        .map(c => c.trim())
-        .filter(c => {
-          if (!c) return false;
-          const cleaned = c.replace(/\D/g, '');
-          return cleaned.length >= 10 && cleaned.length <= 15;
-        });
-
-      if (contacts.length === 0) {
+      if (validContacts.length === 0) {
         Alert.alert("Error", "Please enter valid phone numbers.");
         setLoader(false);
         return;
       }
 
-      // Prepare data
-      const data = {
-        task: values.task,
-        senderId: values.senderId.trim(),
-        message: values.message.trim(),
-        contact: contacts.join(','),
-        repeat: values.repeat,
-        ...(values.task === "Schedule SMS" && values.scheduleDate && {
-          isScheduled: true,
-          scheduledAt: `${values.scheduleDate.toISOString().split('T')[0]}T${values.scheduleTime || '12:00'}:00`
-        })
-      };
+      // Warn about invalid numbers but continue
+      if (invalidContacts.length > 0) {
+        const proceed = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            "Invalid Numbers Found",
+            `${invalidContacts.length} invalid number(s) will be skipped:\n${invalidContacts.slice(0, 3).join(', ')}${invalidContacts.length > 3 ? '...' : ''}\n\nContinue with ${validContacts.length} valid number(s)?`,
+            [
+              { text: "Cancel", onPress: () => resolve(false), style: "cancel" },
+              { text: "Continue", onPress: () => resolve(true) }
+            ]
+          );
+        });
+        
+        if (!proceed) {
+          setLoader(false);
+          return;
+        }
+      }
 
-      const endpoint = "http://YOUR_LOCAL_IP:3001/api/sms/normal";
+      // Calculate cost and confirm
+      const { totalUnits, totalCost, unitsPerMessage } = calculateSmsCost(
+        values.message.trim(),
+        validContacts.length
+      );
 
-      const response = await axios.post(endpoint, data, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 30000,
+      const confirmSend = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          "Confirm SMS",
+          `📱 Recipients: ${validContacts.length}\n📝 Message Units: ${unitsPerMessage}\n📊 Total Units: ${totalUnits}\n💰 Est. Cost: ₦${totalCost.toLocaleString()}`,
+          [
+            { text: "Cancel", onPress: () => resolve(false), style: "cancel" },
+            { text: "Send", onPress: () => resolve(true) }
+          ]
+        );
       });
 
-      if (response.status === 200 || response.status === 201) {
+      if (!confirmSend) {
+        setLoader(false);
+        return;
+      }
+
+      // Prepare SMS data
+      const smsData = {
+        senderId: values.senderId.trim(),
+        message: values.message.trim(),
+        recipients: validContacts,
+        type: values.task === "Schedule SMS" ? 'scheduled' as const : 'instant' as const,
+        scheduleDate: values.scheduleDate.toISOString().split('T')[0],
+        scheduleTime: values.scheduleTime.toTimeString().split(" ")[0].slice(0, 5),
+        repeat: values.repeat === "Yes"
+      };
+
+      // Send SMS using the service
+      let response;
+      if (values.task === "Schedule SMS") {
+        response = await scheduleSms(smsData);
+      } else {
+        response = await sendInstantSms(smsData);
+      }
+
+      if (response.success) {
+        setSendSuccess(true);
+        // Refresh balance after sending
+        loadSmsBalance();
+        
         Alert.alert(
-          "Success", 
-          values.task === "Schedule SMS" 
-            ? "SMS Scheduled Successfully!" 
-            : "Message Sent Successfully!",
+          "🎉 Success!",
+          values.task === "Schedule SMS"
+            ? `SMS scheduled successfully!\n${response.totalRecipients || validContacts.length} recipients\n${response.unitsUsed || totalUnits} units used`
+            : `Message sent successfully!\n${response.totalRecipients || validContacts.length} recipients\n${response.unitsUsed || totalUnits} units used`,
           [{ text: "OK" }]
         );
+      } else {
+        Alert.alert("Error", response.message);
       }
     } catch (error: any) {
       console.error('SMS sending error:', error);
-      let errorMessage = "Failed to send SMS";
-      if (error.response) {
-        errorMessage = error.response.data?.message || error.response.data?.error || errorMessage;
-      } else if (error.request) {
-        errorMessage = "No response from server. Please check your connection.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      Alert.alert("Error", errorMessage);
+      Alert.alert("Error", error.message || "Failed to send SMS. Please try again.");
     } finally {
       setLoader(false);
     }
@@ -749,11 +1034,7 @@ const NormalSms = () => {
     contact: "",
     repeat: "No",
     scheduleDate: new Date(),
-    scheduleTime: new Date().toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: false 
-    })
+    scheduleTime: new Date()
   };
 
   return (
@@ -775,97 +1056,83 @@ const NormalSms = () => {
           setFieldTouched,
           setFieldValue,
           isValid,
-        }) => (
+          resetForm,
+        }) => {
+          // Calculate SMS info for current message
+          const smsInfo = useMemo(() => {
+            const { units, charsPerUnit, isUnicode } = calculateSmsUnits(values.message);
+            const { valid } = parsePhoneNumbers(values.contact);
+            const { totalUnits, totalCost } = calculateSmsCost(values.message, valid.length);
+            const charsRemaining = values.message.length <= charsPerUnit 
+              ? charsPerUnit - values.message.length 
+              : charsPerUnit - (values.message.length % (charsPerUnit === 160 ? 153 : 67));
+            
+            return {
+              units,
+              charsPerUnit,
+              isUnicode,
+              recipientCount: valid.length,
+              totalUnits,
+              totalCost,
+              charsRemaining,
+              currentPage: Math.ceil(values.message.length / (values.message.length <= charsPerUnit ? charsPerUnit : (charsPerUnit === 160 ? 153 : 67))) || 1
+            };
+          }, [values.message, values.contact]);
+
+          return (
           <>
             <ScrollView 
               contentContainerStyle={{ paddingBottom: 60 }}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              <View className="mt-6 px-5">
-                {/* Header */}
-                <View className="mb-8">
-                  <Text className="text-2xl font-bold text-gray-900">Send SMS</Text>
-                  <Text className="text-gray-600 mt-1">Send instant or scheduled messages</Text>
-                </View>
+              {/* Simple Header */}
+              <View className="bg-white px-5 pt-12 pb-6 border-b border-gray-100">
+                <Text className="text-2xl font-bold text-gray-900">Send SMS</Text>
+                <Text className="text-gray-500 mt-1">Compose and send messages to your contacts</Text>
+              </View>
 
+              <View className="px-5 mt-6">
                 <View className="space-y-6">
-                  {/* TASK SELECTION */}
+                  {/* SEND TYPE */}
                   <Animated.View entering={FadeInDown.delay(150)}>
-                    <Text className="text-gray-800 font-semibold text-base mb-3">
-                      Choose Task *
-                    </Text>
-
-                    <View className="flex-row space-x-4">
-                      <TouchableOpacity
-                        onPress={() => {
-                          setFieldValue("task", "Send Instant SMS");
-                          setFieldTouched("task", true);
-                        }}
-                        className={`flex-1 p-4 rounded-xl border-2 ${
-                          values.task === "Send Instant SMS"
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 bg-white"
-                        }`}
-                      >
-                        <View className="flex-row items-center">
-                          <View className={`w-4 h-4 rounded-full mr-3 ${
-                            values.task === "Send Instant SMS"
-                              ? "bg-blue-500"
-                              : "border-2 border-gray-300"
-                          }`} />
-                          <MaterialCommunityIcons 
-                            name="send" 
-                            size={22} 
-                            color={values.task === "Send Instant SMS" ? "#3b82f6" : "#9ca3af"} 
-                          />
-                          <Text className={`ml-2 font-medium ${
-                            values.task === "Send Instant SMS"
-                              ? "text-blue-700"
-                              : "text-gray-700"
-                          }`}>
-                            Send Now
-                          </Text>
-                        </View>
-                        <Text className="text-gray-500 text-xs mt-2">
-                          Send message immediately
-                        </Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          setFieldValue("task", "Schedule SMS");
-                          setFieldTouched("task", true);
-                        }}
-                        className={`flex-1 p-4 rounded-xl border-2 ${
-                          values.task === "Schedule SMS"
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 bg-white"
-                        }`}
-                      >
-                        <View className="flex-row items-center">
-                          <View className={`w-4 h-4 rounded-full mr-3 ${
-                            values.task === "Schedule SMS"
-                              ? "bg-blue-500"
-                              : "border-2 border-gray-300"
-                          }`} />
-                          <MaterialCommunityIcons 
-                            name="clock-outline" 
-                            size={22} 
-                            color={values.task === "Schedule SMS" ? "#3b82f6" : "#9ca3af"} 
-                          />
-                          <Text className={`ml-2 font-medium ${
-                            values.task === "Schedule SMS"
-                              ? "text-blue-700"
-                              : "text-gray-700"
-                          }`}>
-                            Schedule
-                          </Text>
-                        </View>
-                        <Text className="text-gray-500 text-xs mt-2">
-                          Schedule for later
-                        </Text>
-                      </TouchableOpacity>
+                    <View className="bg-white rounded-2xl p-4 shadow-sm">
+                      <View className="flex-row items-center mb-2">
+                        <MaterialCommunityIcons name="flash" size={20} color="#3b82f6" />
+                        <Text className="ml-2 font-semibold text-gray-800">Send Type</Text>
+                      </View>
+                      <Text className="text-gray-500 text-xs mb-3">
+                        ⚡ Instant: Send now  |  📅 Schedule: Send at a specific date & time
+                      </Text>
+                      <View className="flex-row space-x-3">
+                        {["Send Instant SMS", "Schedule SMS"].map((option) => (
+                          <TouchableOpacity
+                            key={option}
+                            className={`flex-1 py-3 rounded-xl border-2 items-center ${option === "Schedule SMS" ? "ml-3" : ""} ${
+                              values.task === option
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-gray-200 bg-gray-50"
+                            }`}
+                            onPress={() => {
+                              setFieldValue("task", option);
+                              setFieldTouched("task", true);
+                            }}
+                          >
+                            <MaterialCommunityIcons
+                              name={option === "Send Instant SMS" ? "flash" : "calendar-clock"}
+                              size={20}
+                              color={values.task === option ? "#3b82f6" : "#9ca3af"}
+                            />
+                            <Text
+                              className={`mt-1 text-sm font-medium ${
+                                values.task === option ? "text-blue-600" : "text-gray-500"
+                              }`}
+                            >
+                              {option === "Send Instant SMS" ? "Instant" : "Schedule"}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
                   </Animated.View>
 
@@ -873,82 +1140,62 @@ const NormalSms = () => {
                   {values.task === "Schedule SMS" && (
                     <Animated.View 
                       entering={FadeInDown.delay(200)}
-                      className="bg-white p-4 rounded-xl border border-gray-200"
+                      className="bg-white rounded-2xl p-4 mb-4 shadow-sm"
                     >
-                      <Text className="text-gray-800 font-semibold text-base mb-3">
-                        Schedule Delivery
+                      <View className="flex-row items-center mb-2">
+                        <Ionicons name="calendar-outline" size={20} color="#3b82f6" />
+                        <Text className="ml-2 font-semibold text-gray-800">Schedule</Text>
+                      </View>
+                      <Text className="text-gray-500 text-xs mb-3">
+                        📅 Choose when to send. Great for promotions, reminders, or off-peak hours.
                       </Text>
                       
-                      <View className="flex-row space-x-4">
-                        {/* Date Picker */}
+                      <View className="flex-row space-x-3">
                         <TouchableOpacity
+                          className="flex-1 bg-gray-50 rounded-xl p-3 flex-row items-center"
                           onPress={() => setShowDatePicker(true)}
-                          className="flex-1 border border-gray-300 rounded-lg p-3"
                         >
-                          <View className="flex-row items-center">
-                            <MaterialCommunityIcons 
-                              name="calendar" 
-                              size={20} 
-                              color="#6b7280" 
-                            />
-                            <Text className="ml-2 text-gray-700">
-                              {values.scheduleDate 
-                                ? values.scheduleDate.toLocaleDateString()
-                                : "Select Date"}
-                            </Text>
-                          </View>
+                          <Ionicons name="calendar" size={20} color="#3b82f6" />
+                          <Text className="ml-2 text-gray-700">
+                            {values.scheduleDate.toLocaleDateString()}
+                          </Text>
                         </TouchableOpacity>
 
-                        {/* Time Picker */}
                         <TouchableOpacity
+                          className="flex-1 bg-gray-50 rounded-xl p-3 flex-row items-center ml-3"
                           onPress={() => setShowTimePicker(true)}
-                          className="flex-1 border border-gray-300 rounded-lg p-3"
                         >
-                          <View className="flex-row items-center">
-                            <MaterialCommunityIcons 
-                              name="clock-time-four-outline" 
-                              size={20} 
-                              color="#6b7280" 
-                            />
-                            <Text className="ml-2 text-gray-700">
-                              {values.scheduleTime || "Select Time"}
-                            </Text>
-                          </View>
+                          <Ionicons name="time" size={20} color="#3b82f6" />
+                          <Text className="ml-2 text-gray-700">
+                            {values.scheduleTime.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </Text>
                         </TouchableOpacity>
                       </View>
 
                       {/* Date Picker Modal */}
                       {showDatePicker && (
                         <DateTimePicker
-                          value={values.scheduleDate || new Date()}
+                          value={values.scheduleDate}
                           mode="date"
-                          display={Platform.OS === "ios" ? "spinner" : "default"}
-                          onChange={(event: DateTimePickerEvent, date?: Date) => {
-                            setShowDatePicker(false);
-                            if (date) {
-                              setFieldValue("scheduleDate", date);
-                            }
-                          }}
                           minimumDate={new Date()}
+                          onChange={(_, date) => {
+                            setShowDatePicker(false);
+                            if (date) setFieldValue("scheduleDate", date);
+                          }}
                         />
                       )}
 
                       {/* Time Picker Modal */}
                       {showTimePicker && (
                         <DateTimePicker
-                          value={new Date(`1970-01-01T${values.scheduleTime || '12:00'}`)}
+                          value={values.scheduleTime}
                           mode="time"
-                          display={Platform.OS === "ios" ? "spinner" : "default"}
-                          onChange={(event: DateTimePickerEvent, date?: Date) => {
+                          onChange={(_, time) => {
                             setShowTimePicker(false);
-                            if (date) {
-                              const timeString = date.toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                hour12: false 
-                              });
-                              setFieldValue("scheduleTime", timeString);
-                            }
+                            if (time) setFieldValue("scheduleTime", time);
                           }}
                         />
                       )}
@@ -998,11 +1245,18 @@ const NormalSms = () => {
                       <Text className="text-gray-800 font-semibold text-base">
                         Message *
                       </Text>
-                      <Text className={`text-xs ${
-                        values.message.length > 160 ? 'text-red-500' : 'text-gray-500'
-                      }`}>
-                        {values.message.length}/160
-                      </Text>
+                      <View className="flex-row items-center">
+                        {smsInfo.isUnicode && (
+                          <View className="bg-yellow-100 px-2 py-0.5 rounded mr-2">
+                            <Text className="text-yellow-700 text-xs">Unicode</Text>
+                          </View>
+                        )}
+                        <Text className={`text-xs ${
+                          smsInfo.units > 1 ? 'text-orange-500' : 'text-gray-500'
+                        }`}>
+                          Page {smsInfo.currentPage} • {smsInfo.charsRemaining} chars left
+                        </Text>
+                      </View>
                     </View>
 
                     <View className={`bg-white border rounded-xl p-4 ${
@@ -1016,10 +1270,35 @@ const NormalSms = () => {
                         onChangeText={handleChange("message")}
                         onBlur={() => setFieldTouched("message")}
                         value={values.message}
-                        maxLength={160}
                         placeholderTextColor="#9ca3af"
                       />
                       
+                      {/* Character count bar */}
+                      <View className="mt-2 pt-2 border-t border-gray-100">
+                        <View className="flex-row justify-between items-center">
+                          <Text className="text-gray-500 text-xs">
+                            {values.message.length} characters
+                          </Text>
+                          <Text className={`text-xs font-medium ${
+                            smsInfo.units === 1 ? 'text-green-600' : 
+                            smsInfo.units <= 3 ? 'text-orange-500' : 'text-red-500'
+                          }`}>
+                            {smsInfo.units} SMS page{smsInfo.units !== 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                        {/* Progress bar */}
+                        <View className="h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
+                          <View 
+                            className={`h-full rounded-full ${
+                              smsInfo.units === 1 ? 'bg-green-500' : 
+                              smsInfo.units <= 3 ? 'bg-orange-500' : 'bg-red-500'
+                            }`}
+                            style={{ 
+                              width: `${Math.min((values.message.length / (smsInfo.charsPerUnit * 3)) * 100, 100)}%` 
+                            }}
+                          />
+                        </View>
+                      </View>
                     </View>
 
                     {errors.message && touched.message && (
@@ -1029,83 +1308,82 @@ const NormalSms = () => {
                     )}
                   </Animated.View>
 
-                  {/* CONTACT INPUT */}
+                  {/* RECIPIENTS SECTION */}
                   <Animated.View entering={FadeInDown.delay(350)}>
-                    <View className="flex-row justify-between items-center mt-8 mb-2">
+                    <View className="flex-row justify-between items-center mt-6 mb-3">
                       <Text className="text-gray-800 font-semibold text-base">
                         Recipients *
                       </Text>
-                      {values.contact && (
-                        <Text className="text-blue-500 text-xs">
-                          {values.contact.split(',').filter(Boolean).length} contact(s)
-                        </Text>
-                      )}
                     </View>
 
-                    {/* Contact Selection Cards */}
-                    <View className="flex-row space-x-3 mb-3">
+                    {/* Two Action Buttons */}
+                    <View className="flex-row mb-4">
                       <TouchableOpacity
                         onPress={() => setContactModal(true)}
-                        className="flex-1 bg-blue-500 rounded-xl p-3 items-center"
+                        className="flex-1 mr-2 bg-blue-50 border border-blue-200 rounded-xl p-4 items-center"
                       >
-                        <MaterialCommunityIcons name="contacts" size={24} color="white" />
-                        <Text className="text-white text-xs mt-1 text-center">
-                          Add Contacts
-                        </Text>
+                        <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mb-2">
+                          <MaterialCommunityIcons name="account-plus" size={24} color="#3b82f6" />
+                        </View>
+                        <Text className="text-blue-700 font-semibold">Add Contacts</Text>
+                        <Text className="text-blue-500 text-xs mt-1">Manual or import</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
-                        onPress={() => setGroupModal(true)}
-                        className="flex-1 bg-green-500 rounded-xl p-3 items-center"
+                        onPress={() => setGroupsModal(true)}
+                        className="flex-1 ml-2 bg-purple-50 border border-purple-200 rounded-xl p-4 items-center"
                       >
-                        <MaterialCommunityIcons name="account-group" size={24} color="white" />
-                        <Text className="text-white text-xs mt-1 text-center">
-                          Contact Groups
-                        </Text>
+                        <View className="w-12 h-12 bg-purple-100 rounded-full items-center justify-center mb-2">
+                          <MaterialCommunityIcons name="account-group" size={24} color="#8b5cf6" />
+                        </View>
+                        <Text className="text-purple-700 font-semibold">My Groups</Text>
+                        <Text className="text-purple-500 text-xs mt-1">{contactGroups.length} saved</Text>
                       </TouchableOpacity>
-
-                      {selectedGroup && (
-                        <TouchableOpacity
-                          onPress={() => {
-                            setSelectedGroup(null);
-                            setFieldValue("contact", "");
-                          }}
-                          className="bg-red-500 rounded-xl p-3 items-center"
-                        >
-                          <MaterialCommunityIcons name="close" size={24} color="white" />
-                          <Text className="text-white text-xs mt-1">Clear</Text>
-                        </TouchableOpacity>
-                      )}
                     </View>
 
-                    {/* Selected Group Info */}
-                    {selectedGroup && (
-                      <View className="bg-blue-50 p-3 rounded-lg mb-3">
-                        <Text className="text-blue-800 font-medium">
-                          Selected Group: {selectedGroup.name}
-                        </Text>
-                        <Text className="text-blue-600 text-xs mt-1">
-                          {selectedGroup.contacts.length} contacts
-                        </Text>
+                    {/* Recipients Display Card - shows when contacts are added */}
+                    {values.contact ? (
+                      <View className="bg-white border border-gray-200 rounded-xl p-4">
+                        <View className="flex-row items-center justify-between">
+                          <View className="flex-row items-center flex-1">
+                            <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center">
+                              <MaterialCommunityIcons name="account-check" size={22} color="#10b981" />
+                            </View>
+                            <View className="ml-3 flex-1">
+                              {(() => {
+                                const { valid, invalid } = parsePhoneNumbers(values.contact);
+                                return (
+                                  <>
+                                    <Text className="text-gray-900 font-semibold">
+                                      {valid.length} Recipient{valid.length !== 1 ? 's' : ''} Added
+                                    </Text>
+                                    {invalid.length > 0 && (
+                                      <Text className="text-orange-500 text-xs">
+                                        {invalid.length} invalid will be skipped
+                                      </Text>
+                                    )}
+                                    {selectedGroup && (
+                                      <Text className="text-purple-600 text-xs">From group: {selectedGroup.name}</Text>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </View>
+                          </View>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setSelectedGroup(null);
+                              setFieldValue("contact", "");
+                            }}
+                            className="p-2"
+                          >
+                            <MaterialCommunityIcons name="close-circle" size={24} color="#ef4444" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                    )}
+                    ) : null}
 
-                    {/* Contact Input */}
-                    <View className={`bg-white border rounded-xl px-4 py-3 mb-8 ${
-                      errors.contact && touched.contact ? 'border-red-300' : 'border-gray-300'
-                    }`}>
-                      <TextInput
-                        placeholder="Enter phone numbers separated by commas (e.g., 2348012345678, 2348098765432)"
-                        value={values.contact}
-                        onChangeText={handleChange("contact")}
-                        onBlur={() => setFieldTouched("contact")}
-                        multiline
-                        className="text-gray-800 text-base min-h-[60px]"
-                        placeholderTextColor="#9ca3af"
-                      />
-                    </View>
-
-                    {errors.contact && touched.contact && (
+                    {errors.contact && touched.contact && !values.contact && (
                       <Text className="text-red-500 text-sm mt-2 ml-1">
                         {errors.contact}
                       </Text>
@@ -1170,38 +1448,43 @@ const NormalSms = () => {
                   </Animated.View>
 
                   {/* BUTTONS */}
-                  <Animated.View entering={FadeInDown.delay(450)} className="mt-8">
+                  <Animated.View entering={FadeInDown.delay(450)} className="mt-8 mb-4">
+                    {/* Cost Summary Card */}
+                    {smsInfo.recipientCount > 0 && values.message.length > 0 && (
+                      <View className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl mb-4 border border-blue-100">
+                        <View className="flex-row justify-between items-center">
+                          <View>
+                            <Text className="text-gray-600 text-xs">Total Cost</Text>
+                            <Text className="text-blue-700 font-bold text-xl">₦{smsInfo.totalCost.toLocaleString()}</Text>
+                          </View>
+                          <View className="items-end">
+                            <Text className="text-gray-500 text-xs">{smsInfo.recipientCount} recipients × {smsInfo.units} page(s)</Text>
+                            <Text className="text-gray-600 text-sm font-medium">{smsInfo.totalUnits} units</Text>
+                          </View>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Send Button */}
                     <Button
                       loading={loader}
-                      title={
-                        values.task === "Schedule SMS" 
-                          ? "SCHEDULE MESSAGE" 
-                          : "SEND MESSAGE NOW"
-                      }
-                      action={handleSubmit}
-                      disabled={!isValid || loader}
-                      className={`py-4 rounded-xl ${!isValid ? 'opacity-50' : ''}`}
+                      title={values.task === "Schedule SMS" ? "SCHEDULE MESSAGE" : "SEND MESSAGE NOW"}
+                      action={() => handleSubmit()}
+                      disabled={!isValid || loader || smsInfo.recipientCount === 0}
+                      className={`py-4 rounded-xl ${(!isValid || loader || smsInfo.recipientCount === 0) ? 'opacity-50' : ''}`}
                     />
 
+                    {/* Clear Button */}
                     <TouchableOpacity
                       onPress={() => {
-                        setFieldValue("senderId", "");
-                        setFieldValue("message", "");
-                        setFieldValue("contact", "");
-                        setFieldValue("scheduleDate", new Date());
-                        setFieldValue("scheduleTime", new Date().toLocaleTimeString([], { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          hour12: false 
-                        }));
+                        resetForm();
                         setSelectedGroup(null);
-                        setFieldTouched("senderId", false);
-                        setFieldTouched("message", false);
-                        setFieldTouched("contact", false);
+                        setSendSuccess(false);
                       }}
-                      className="mt-4 p-4 rounded-xl bg-gray-100 border border-gray-200"
+                      className="mt-4 p-4 rounded-xl bg-gray-100 border border-gray-200 flex-row items-center justify-center"
                     >
-                      <Text className="text-center text-gray-700 font-medium">
+                      <MaterialCommunityIcons name="refresh" size={20} color="#6b7280" />
+                      <Text className="text-gray-700 font-medium ml-2">
                         Clear All Fields
                       </Text>
                     </TouchableOpacity>
@@ -1210,13 +1493,53 @@ const NormalSms = () => {
               </View>
             </ScrollView>
 
-            {/* Contact Selection Modal */}
-            <ContactSelectionModal
+            {/* Add Contacts Modal */}
+            <ContactsModal
               visible={contactModal}
               onClose={() => setContactModal(false)}
+              onContactsAdded={(newContacts) => {
+                const currentContacts = values.contact ? values.contact + ',' : '';
+                setFieldValue("contact", currentContacts + newContacts);
+              }}
               onSelectAllContacts={() => selectAllContacts(setFieldValue)}
-              onSelectIndividualContacts={openContactBrowser}
+              onBrowseContacts={openContactBrowser}
               onImportFromFile={() => importContactsFromFile(setFieldValue)}
+            />
+
+            {/* Groups Modal */}
+            <GroupsModal
+              visible={groupsModal}
+              onClose={() => setGroupsModal(false)}
+              contactGroups={contactGroups}
+              onSelectGroup={(group) => {
+                setSelectedGroup(group);
+                setFieldValue("contact", group.contacts.join(','));
+              }}
+              onCreateGroup={(name, contacts) => {
+                createContactGroup(name, contacts.join(','));
+              }}
+              onDeleteGroup={(id) => {
+                Alert.alert(
+                  'Delete Group',
+                  'Are you sure you want to delete this group?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Delete',
+                      style: 'destructive',
+                      onPress: async () => {
+                        const updated = contactGroups.filter(g => g.id !== id);
+                        setContactGroups(updated);
+                        await AsyncStorage.setItem('contactGroups', JSON.stringify(updated));
+                        if (selectedGroup?.id === id) {
+                          setSelectedGroup(null);
+                          setFieldValue('contact', '');
+                        }
+                      }
+                    }
+                  ]
+                );
+              }}
             />
 
             {/* Contact Browser Modal */}
@@ -1225,73 +1548,9 @@ const NormalSms = () => {
               onClose={() => setBrowserModal(false)}
               onConfirm={(selectedNumbers) => handleContactsSelected(selectedNumbers, setFieldValue)}
             />
-
-            {/* Contact Groups Modal */}
-            <ContactGroupsModal
-              visible={groupModal}
-              onClose={() => setGroupModal(false)}
-              contactGroups={contactGroups}
-              selectedGroup={selectedGroup}
-              onSelectGroup={(group) => {
-                setSelectedGroup(group);
-                setFieldValue("contact", group.contacts.join(','));
-              }}
-              onCreateGroup={() => {
-                if (!values.contact || values.contact.trim().length === 0) {
-                  Alert.alert("No Contacts", "Please add some contacts first before creating a group.");
-                  setGroupModal(false);
-                  return;
-                }
-
-                // Fixed: Use Alert.prompt properly
-                Alert.prompt(
-                  "Create New Group",
-                  "Enter group name:",
-                  [
-                    {
-                      text: "Cancel",
-                      style: "cancel"
-                    },
-                    {
-                      text: "Create",
-                      onPress: (groupName?: string) => {
-                        if (groupName) {
-                          createContactGroup(groupName, values.contact);
-                          setGroupModal(false);
-                        }
-                      }
-                    }
-                  ],
-                  "plain-text"
-                );
-              }}
-              onDeleteGroup={(groupId: string) => {
-                Alert.alert(
-                  'Delete Group',
-                  'Are you sure you want to delete this group?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Delete', style: 'destructive', onPress: async () => {
-                      try {
-                        const updated = contactGroups.filter(g => g.id !== groupId);
-                        setContactGroups(updated);
-                        await AsyncStorage.setItem('contactGroups', JSON.stringify(updated));
-                        if (selectedGroup?.id === groupId) {
-                          setSelectedGroup(null);
-                          setFieldValue('contact', '');
-                        }
-                        setGroupModal(false);
-                      } catch (err) {
-                        console.error('Error deleting group:', err);
-                        Alert.alert('Error', 'Failed to delete contact group.');
-                      }
-                    }}
-                  ]
-                );
-              }}
-            />
           </>
-        )}
+        );
+        }}
       </Formik>
     </KeyboardAvoidingView>
   );

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { COLORS } from "../constants/theme";
 
 interface QuickActionsProps {
   onActionPress: (screen: string) => void;
@@ -11,29 +12,29 @@ const actions = [
     icon: "call", 
     label: "USSD", 
     screen: "UssdScreen", 
-    color: "#667eea",
-    bgColor: "#F0EEFF"
+    color: COLORS.gradientPurple1,
+    bgColor: COLORS.violetLight
   },
   { 
     icon: "cloud", 
     label: "API", 
     screen: "ApiScreen", 
-    color: "#059669",
-    bgColor: "#ECFDF5"
+    color: COLORS.gradientPurple2,
+    bgColor: COLORS.violetLight
   },
   { 
     icon: "mail", 
     label: "Email", 
     screen: "EmailMarketingScreen", 
-    color: "#D97706",
-    bgColor: "#FFFBEB"
+    color: COLORS.success,
+    bgColor: COLORS.successLight
   },
   { 
     icon: "cart", 
     label: "POS", 
     screen: "PosScreen", 
-    color: "#f5576c",
-    bgColor: "#FFF0F2"
+    color: COLORS.warning,
+    bgColor: COLORS.warningLight
   },
 ];
 
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSansSemiBold',
-    color: '#374151',
+    color: COLORS.textSecondary,
     marginTop: 8,
     textAlign: 'center',
   },

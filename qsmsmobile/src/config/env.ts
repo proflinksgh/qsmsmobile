@@ -22,6 +22,11 @@ export const env = {
     // OTP verification endpoints
     sendOtp: "/sendotp",
     verifyOtp: "/verifyotp",
+    // SMS endpoints
+    sendSms: "/sendsms",
+    scheduleSms: "/schedulesms",
+    getSmsBalance: "/getsmsbalance",
+    sendPersonalisedSms: "/sendpersonalisedsms",
   },
 
   /** Request timeout in milliseconds */

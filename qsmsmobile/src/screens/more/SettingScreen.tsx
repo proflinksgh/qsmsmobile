@@ -1,5 +1,6 @@
 import ScreenHeader from "@/src/components/ScreenHeader";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
   Platform,
@@ -65,6 +66,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
 );
 
 const SettingsScreen = () => {
+  const navigation = useNavigation();
   const [notifications, setNotifications] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -75,6 +77,7 @@ const SettingsScreen = () => {
       <ScreenHeader 
         title="Settings" 
         subtitle="Manage your preferences"
+        onBackPress={() => navigation.goBack()}
       />
 
       <ScrollView 

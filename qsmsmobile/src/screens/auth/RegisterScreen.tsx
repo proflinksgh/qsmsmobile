@@ -199,11 +199,55 @@ const RegisterScreen = () => {
           ]
         );
       } else {
+        // Check if email already exists in backend system
+        const errorMessage = systemRegistration.message?.toLowerCase() || "";
+        if (errorMessage.includes("email") && (errorMessage.includes("exist") || errorMessage.includes("already"))) {
+          // Email exists in backend - user might already have an account
+          setVerificationModal(false);
+          Alert.alert(
+            "Account Already Exists",
+            "This email is already registered in our system. If you previously created an account, please login instead.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { 
+                text: "Go to Login", 
+                onPress: () => navigateAuth("Login" as never) 
+              }
+            ]
+          );
+          return;
+        }
         throw new Error(systemRegistration.message || "Failed to complete registration");
       }
     } catch (error: unknown) {
-      const message = getFirebaseErrorMessage(error, "Verification failed. Please try again.");
-      Alert.alert("Verification Failed", message);
+      // Check if it's an axios error with response data
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        const responseMessage = axiosError.response?.data?.message?.toLowerCase() || "";
+        
+        if (responseMessage.includes("email") && (responseMessage.includes("exist") || responseMessage.includes("already"))) {
+          setVerificationModal(false);
+          Alert.alert(
+            "Account Already Exists",
+            "This email is already registered in our system. If you previously created an account, please login instead.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { 
+                text: "Go to Login", 
+                onPress: () => navigateAuth("Login" as never) 
+              }
+            ]
+          );
+          return;
+        }
+        errorMessage = axiosError.response?.data?.message || errorMessage;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert("Registration Failed", errorMessage);
     } finally {
       setLoader(false);
     }

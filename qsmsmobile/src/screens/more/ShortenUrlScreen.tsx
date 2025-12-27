@@ -63,6 +63,7 @@ const UrlItem: React.FC<{ item: ShortenedUrl; index: number }> = ({ item, index 
 };
 
 const ShortenUrlScreen = () => {
+  const navigation = useNavigation();
   const [url, setUrl] = useState("");
 
   const handleShorten = () => {
@@ -76,7 +77,7 @@ const ShortenUrlScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Shorten URL" subtitle="Create short links" />
+      <ScreenHeader title="Shorten URL" subtitle="Create short links" onBackPress={() => navigation.goBack()} />
 
       <FlatList
         data={mockUrls}

@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
@@ -14,7 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Animated, { FadeIn, FadeInDown, FadeInRight } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInRight } from "react-native-reanimated";
+import { COLORS } from "../constants/theme";
 import { fetchUserProfile } from "../service/apiClient";
 
 type HeaderUser = {
@@ -30,8 +30,11 @@ type HeaderUser = {
   reference?: string | null;
 } | null;
 
-const Header = () => {
-  const navigation = useNavigation<any>();
+interface HeaderProps {
+  onProfilePress?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onProfilePress }) => {
   const [user, setUser] = useState<HeaderUser>(null);
   const [loadingAvatar, setLoadingAvatar] = useState(true);
 
@@ -119,7 +122,7 @@ const Header = () => {
 
   return (
     <LinearGradient
-      colors={['#667eea', '#764ba2', '#6B8DD6']}
+      colors={[COLORS.gradientPurple1, COLORS.gradientPurple2]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
@@ -137,7 +140,7 @@ const Header = () => {
         <Animated.View entering={FadeIn.duration(500)} style={styles.logoSection}>
           <View style={styles.logoContainer}>
             <LinearGradient
-              colors={['#ffffff', '#f8f9fa']}
+              colors={[COLORS.white, COLORS.offwhite]}
               style={styles.logoGradient}
             >
               <Text style={styles.logoText}>Q</Text>
@@ -151,7 +154,7 @@ const Header = () => {
         {/* Actions */}
         <Animated.View entering={FadeInRight.duration(500).delay(100)} style={styles.actionsRow}>
           <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-            <Ionicons name="notifications-outline" size={20} color="white" />
+            <Ionicons name="notifications-outline" size={20} color={COLORS.white} />
             <View style={styles.notificationBadge}>
               <Text style={styles.badgeText}>3</Text>
             </View>
@@ -160,15 +163,15 @@ const Header = () => {
           <TouchableOpacity 
             style={styles.avatarContainer} 
             activeOpacity={0.8}
-            onPress={() => navigation.navigate("UserProfile")}
+            onPress={onProfilePress}
           >
             {loadingAvatar ? (
-              <ActivityIndicator size="small" color="#667eea" />
+              <ActivityIndicator size="small" color={COLORS.textMuted} />
             ) : user?.photoURL ? (
               <Image source={{ uri: user.photoURL }} style={styles.avatarImage} />
             ) : (
               <LinearGradient
-                colors={['#f093fb', '#f5576c']}
+                colors={[COLORS.gray3, COLORS.gray7]}
                 style={styles.avatarGradient}
               >
                 <Text style={styles.avatarInitials}>
@@ -180,43 +183,6 @@ const Header = () => {
           </TouchableOpacity>
         </Animated.View>
       </View>
-
-      {/* Quick Stats Bar */}
-      <Animated.View entering={FadeInDown.duration(500).delay(300)} style={styles.statsBar}>
-        <TouchableOpacity style={styles.statItem} activeOpacity={0.7}>
-          <View style={styles.statIconContainer}>
-            <Ionicons name="chatbubbles" size={16} color="#667eea" />
-          </View>
-          <View>
-            <Text style={styles.statValue}>2,450</Text>
-            <Text style={styles.statLabel}>SMS Sent</Text>
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.statDivider} />
-
-        <TouchableOpacity style={styles.statItem} activeOpacity={0.7}>
-          <View style={[styles.statIconContainer, { backgroundColor: '#FEF3C7' }]}>
-            <Ionicons name="wallet" size={16} color="#D97706" />
-          </View>
-          <View>
-            <Text style={styles.statValue}>5,000</Text>
-            <Text style={styles.statLabel}>Credits</Text>
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.statDivider} />
-
-        <TouchableOpacity style={styles.statItem} activeOpacity={0.7}>
-          <View style={[styles.statIconContainer, { backgroundColor: '#D1FAE5' }]}>
-            <Ionicons name="trending-up" size={16} color="#059669" />
-          </View>
-          <View>
-            <Text style={styles.statValue}>98%</Text>
-            <Text style={styles.statLabel}>Delivery</Text>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
     </LinearGradient>
   );
 };
@@ -285,7 +251,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 22,
     fontFamily: 'PlusJakartaSansBold',
-    color: '#667eea',
+    color: COLORS.textSecondary,
   },
   brandContainer: {
     flexDirection: 'row',
@@ -295,7 +261,7 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 18,
     fontFamily: 'PlusJakartaSansBold',
-    color: 'white',
+    color: COLORS.white,
   },
   verifiedBadge: {
     flexDirection: 'row',
@@ -309,7 +275,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     fontSize: 10,
     fontFamily: 'PlusJakartaSansBold',
-    color: '#4ADE80',
+    color: COLORS.success,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -330,19 +296,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#f5576c',
+    backgroundColor: COLORS.error,
     width: 14,
     height: 14,
     borderRadius: 7,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#764ba2',
+    borderColor: COLORS.gradientPurple2,
   },
   badgeText: {
     fontSize: 8,
     fontFamily: 'PlusJakartaSansBold',
-    color: 'white',
+    color: COLORS.white,
   },
   avatarContainer: {
     width: 44,
@@ -366,7 +332,7 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSansBold',
-    color: 'white',
+    color: COLORS.white,
   },
   onlineIndicator: {
     position: 'absolute',
@@ -375,54 +341,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#4ADE80',
+    backgroundColor: COLORS.success,
     borderWidth: 2,
-    borderColor: '#764ba2',
-  },
-  statsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-    justifyContent: 'center',
-  },
-  statIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: '#F0EEFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 14,
-    fontFamily: 'PlusJakartaSansBold',
-    color: '#1F2937',
-  },
-  statLabel: {
-    fontSize: 10,
-    fontFamily: 'PlusJakartaSans',
-    color: '#6B7280',
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: '#E5E7EB',
+    borderColor: COLORS.gradientPurple2,
   },
 });
 

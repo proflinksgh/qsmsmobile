@@ -2,12 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { COLORS } from "../constants/theme";
 
 const CreditsCard = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#667eea", "#764ba2"]}
+        colors={[COLORS.gradientDark1, COLORS.gradientDark2]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -39,7 +40,7 @@ const CreditsCard = () => {
           </View>
 
           <TouchableOpacity style={styles.topUpButton} activeOpacity={0.8}>
-            <Ionicons name="add-circle" size={18} color="#667eea" />
+            <Ionicons name="add-circle" size={18} color={COLORS.gradientPurple1} />
             <Text style={styles.topUpText}>Top Up</Text>
           </TouchableOpacity>
         </View>
@@ -122,17 +123,17 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#4ade80',
+    backgroundColor: COLORS.success,
   },
   statusText: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSansSemiBold',
-    color: 'white',
+    color: COLORS.white,
   },
   amount: {
     fontSize: 40,
     fontFamily: 'PlusJakartaSansBold',
-    color: 'white',
+    color: COLORS.white,
     marginTop: 4,
   },
   subAmount: {
@@ -160,12 +161,12 @@ const styles = StyleSheet.create({
   topUpButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
     gap: 6,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   topUpText: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSansBold',
-    color: '#667eea',
+    color: COLORS.gradientPurple1,
   },
   progressContainer: {
     marginTop: 16,
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
   progressFill: {
     width: '75%',
     height: '100%',
-    backgroundColor: 'white',
+    backgroundColor: COLORS.white,
     borderRadius: 3,
   },
   progressText: {

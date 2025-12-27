@@ -78,6 +78,7 @@ const ReportItem: React.FC<{ item: SmsReport; index: number }> = ({ item, index 
 };
 
 const SmsReportScreen = () => {
+  const navigation = useNavigation();
   const [filter, setFilter] = useState<"all" | "delivered" | "pending" | "failed">("all");
 
   const filteredReports = mockReports.filter(
@@ -97,6 +98,7 @@ const SmsReportScreen = () => {
       <ScreenHeader
         title="SMS Reports"
         subtitle="Delivery status & history"
+        onBackPress={() => navigation.goBack()}
         rightAction={
           <TouchableOpacity style={styles.exportButton}>
             <Ionicons name="download-outline" size={20} color="white" />

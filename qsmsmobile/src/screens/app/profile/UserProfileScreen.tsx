@@ -189,7 +189,7 @@ const UserProfileScreen = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Profile" subtitle="Manage your account" />
+        <ScreenHeader title="Profile" subtitle="Manage your account" onBackPress={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#667eea" />
           <Text style={styles.loadingText}>Loading profile...</Text>
@@ -200,7 +200,7 @@ const UserProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Profile" subtitle="Manage your account" />
+      <ScreenHeader title="Profile" subtitle="Manage your account" onBackPress={() => navigation.goBack()} />
 
       <ScrollView
         style={styles.content}

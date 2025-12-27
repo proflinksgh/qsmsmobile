@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { ReactNode } from "react";
 import {
@@ -18,6 +17,7 @@ interface ScreenHeaderProps {
   icon?: string;
   showBack?: boolean;
   rightAction?: ReactNode;
+  onBackPress?: () => void;
 }
 
 const ScreenHeader: React.FC<ScreenHeaderProps> = ({
@@ -26,8 +26,8 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   icon,
   showBack = true,
   rightAction,
+  onBackPress,
 }) => {
-  const navigation = useNavigation();
 
   return (
     <LinearGradient
@@ -45,10 +45,10 @@ const ScreenHeader: React.FC<ScreenHeaderProps> = ({
       {/* Header Content */}
       <View style={styles.content}>
         {/* Left - Back Button */}
-        {showBack ? (
+        {showBack && onBackPress ? (
           <Animated.View entering={FadeIn.duration(400)}>
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={onBackPress}
               style={styles.backButton}
             >
               <Ionicons name="arrow-back" size={22} color="white" />

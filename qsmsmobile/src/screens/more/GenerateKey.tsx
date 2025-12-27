@@ -15,6 +15,7 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 const GenerateKeyScreen = () => {
+  const navigation = useNavigation();
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -41,7 +42,7 @@ const GenerateKeyScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Generate API Key" subtitle="Create new credentials" />
+      <ScreenHeader title="Generate API Key" subtitle="Create new credentials" onBackPress={() => navigation.goBack()} />
 
       <ScrollView
         style={styles.content}

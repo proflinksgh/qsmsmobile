@@ -1,5 +1,6 @@
 import ScreenHeader from "@/src/components/ScreenHeader";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
@@ -14,6 +15,7 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 const BulkEmailScreen = () => {
+  const navigation = useNavigation();
   const [recipients, setRecipients] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -23,6 +25,7 @@ const BulkEmailScreen = () => {
       <ScreenHeader
         title="Bulk Email"
         subtitle="Send email campaigns"
+        onBackPress={() => navigation.goBack()}
         rightAction={
           <TouchableOpacity style={styles.historyButton}>
             <Ionicons name="time-outline" size={20} color="white" />

@@ -54,6 +54,7 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({
 };
 
 const ApiIntegrationScreen = () => {
+  const navigation = useNavigation();
   const [apiKey] = useState("sk_live_xxxxxxxxxxxxxxxxxxxx");
   const [copied, setCopied] = useState(false);
 
@@ -78,6 +79,7 @@ const ApiIntegrationScreen = () => {
       <ScreenHeader
         title="API Integration"
         subtitle="Developer documentation"
+        onBackPress={() => navigation.goBack()}
         rightAction={
           <TouchableOpacity style={styles.docsButton}>
             <Ionicons name="document-text-outline" size={20} color="white" />

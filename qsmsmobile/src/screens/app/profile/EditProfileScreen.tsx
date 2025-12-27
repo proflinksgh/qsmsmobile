@@ -235,7 +235,7 @@ const EditProfileScreen = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Edit Profile" />
+        <ScreenHeader title="Edit Profile" onBackPress={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#667eea" />
           <Text style={styles.loadingText}>Loading profile...</Text>
@@ -246,7 +246,7 @@ const EditProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Edit Profile" />
+      <ScreenHeader title="Edit Profile" onBackPress={() => navigation.goBack()} />
       
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
